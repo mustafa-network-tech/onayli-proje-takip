@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  notes HpBuildingNote[]
+  history HpBuildingHistory[]
+  imports HpExcelImport[]
+  productionImports ProductionImport[]
+  createdAt DateTime @default(now())
+}
+
+model HpProject {
+  id String @id @default(cuid())
+  projectId String
+  projectType String
+  centralName String?
+  projectYear Int?
+  lastImportId String?
+  buildings HpBuilding[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([projectId, projectType])
+  @@index([centralName, projectYear])
+}
+
+model HpBuilding {
+  id String @id @default(cuid())
+  projectRefId String
+  project HpProject @relation(fields: [projectRefId], references: [id], onDelete: Cascade)
+  sourceKey String
+  isActive Boolean @default(true)
+  uavt String?
+  district String?
+  neighborhood String?
+  street String?
+  buildingName String?
+  doorNumber String?
+  bbkHp Int @default(0)
+  pstn Int?
+  dsl Int?
+  infrastructureStatus String?
+  workProgressDate DateTime?
+  rekorDate DateTime?
+  equivalentBuildingCode String?
+  csbmCode String?
+  cableCompleted Boolean @default(false)
+  cableCompletedAt DateTime?
+  spliceCompleted Boolean @default(false)
+  spliceCompletedAt DateTime?
+  obkCompleted Boolean @default(false) @map("ibkCompleted")
+  obkCompletedAt DateTime? @map("ibkCompletedAt")
+  notes HpBuildingNote[]
+  history HpBuildingHistory[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([projectRefId, sourceKey])
+  @@index([uavt])
+  @@index([district, neighborhood, street, doorNumber])
+}
+
+model HpBuildingNote {
+  id String @id @default(cuid())
+  buildingId String
+  building HpBuilding @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  note String
+  createdBy String
+  user User @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  @@index([buildingId, createdAt])
+}
+
+model HpBuildingHistory {
+  id String @id @default(cuid())
+  buildingId String
+  building HpBuilding @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  actionType String
+  previousValue String?
+  newValue String?
+  description String
+  createdBy String
+  user User @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  @@index([buildingId, createdAt])
+}
+
+model HpExcelImport {
+  id String @id @default(cuid())
+  projectType String
+  fileName String
+  importedBy String
+  user User @relation(fields: [importedBy], references: [id])
+  importedAt DateTime @default(now())
+  totalRows Int
+  newProjects Int @default(0)
+  newBuildings Int @default(0)
+  updatedBuildings Int @default(0)
+  archivedBuildings Int @default(0)
+  skippedRows Int @default(0)
+  errorRows Int @default(0)
+  status String
+  errorReport String?
+}
+
+model Team {
+  id String @id @default(cuid())
+  name String
+  normalizedName String @unique
+  entries ProductionEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductionImport {
+  id String @id @default(cuid())
+  fileName String
+  fingerprint String @unique
+  workDate DateTime
+  uploadedAt DateTime @default(now())
+  status String
+  totalTeams Int
+  totalItems Int
+  unknownItems Int
+  importedBy String
+  user User @relation(fields: [importedBy], references: [id])
+  entries ProductionEntry[]
+  @@index([workDate])
+}
+
+model ProductionEntry {
+  id String @id @default(cuid())
+  importId String
+  productionImport ProductionImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  teamId String
+  team Team @relation(fields: [teamId], references: [id])
+  workDate DateTime
+  category String
+  subtype String?
+  cableCapacity Int?
+  cableFamily String?
+  quantity Float
+  unit String
+  originalText String
+  createdAt DateTime @default(now())
+  @@index([workDate, teamId])
+  @@index([category, subtype])
+  @@index([cableFamily, cableCapacity])
+}

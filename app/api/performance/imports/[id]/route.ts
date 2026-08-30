@@ -1,0 +1,2 @@
+import {db} from "@/lib/db";import {requireUser} from "@/lib/auth";
+export async function DELETE(request:Request,{params}:{params:Promise<{id:string}>}){try{await requireUser(request);const {id}=await params;const item=await db.productionImport.findUnique({where:{id}});if(!item)return Response.json({error:"PDF kaydı bulunamadı"},{status:404});await db.productionImport.delete({where:{id}});return Response.json({ok:true,deletedEntries:item.totalItems})}catch(e){return Response.json({error:e instanceof Error?e.message:"Silinemedi"},{status:400})}}

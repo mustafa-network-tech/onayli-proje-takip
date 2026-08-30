@@ -1,0 +1,12 @@
+node_modules
+.next
+.next-dev
+.next-build
+.open-next
+.wrangler
+.env
+.dev.vars
+.dev.vars.*
+prisma/*.db*
+coverage
+*.tsbuildinfo

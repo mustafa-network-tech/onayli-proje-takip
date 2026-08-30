@@ -1,0 +1,1 @@
+import ImportForm from "@/components/ImportForm";export default function Import(){return <><div className="top"><div><h1>Excel Yükleme Merkezi</h1><div className="muted">GF / BF kaynak verilerini kontrollü biçimde içe aktarın</div></div></div><ImportForm/></>}

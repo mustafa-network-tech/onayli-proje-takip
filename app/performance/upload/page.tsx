@@ -1,0 +1,1 @@
+import ProductionUpload from "@/components/ProductionUpload";export default function Upload(){return <><div className="top"><div><h1>Günlük İmalat PDF Yükle</h1><div className="muted">PDF analiz edilir; kullanıcı onayından önce hiçbir kayıt yazılmaz.</div></div></div><ProductionUpload/></>}
