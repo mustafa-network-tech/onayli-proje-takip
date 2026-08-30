@@ -1,2 +1,45 @@
-import {createHash} from "crypto";import {db} from "@/lib/db";import {requireUser} from "@/lib/auth";import {parseProductionText} from "@/lib/production-parser";import {extractPdfText} from "@/lib/pdf-text";
-export async function POST(request:Request){try{await requireUser(request);const form=await request.formData(),file=form.get("file");if(!(file instanceof File))return Response.json({error:"PDF dosyası gerekli"},{status:400});if(file.type!=="application/pdf"&&!file.name.toLocaleLowerCase("tr").endsWith(".pdf"))return Response.json({error:"Yalnızca PDF kabul edilir"},{status:415});if(file.size>15*1024*1024)return Response.json({error:"PDF en fazla 15 MB olabilir"},{status:413});const buffer=Buffer.from(await file.arrayBuffer()),fingerprint=createHash("sha256").update(buffer).digest("hex"),existing=await db.productionImport.findUnique({where:{fingerprint}}),extracted=await extractPdfText(buffer),preview=parseProductionText(extracted.text,file.name,fingerprint);preview.duplicate=Boolean(existing);return Response.json({...preview,usedOcr:extracted.usedOcr})}catch(e){return Response.json({error:e instanceof Error?e.message:"PDF analiz edilemedi"},{status:400})}}
+import { db } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
+import { parseProductionText } from "@/lib/production-parser";
+
+const MAX_TEXT_LENGTH = 2 * 1024 * 1024;
+
+type PreviewRequest = {
+  fileName?: unknown;
+  fingerprint?: unknown;
+  text?: unknown;
+};
+
+export async function POST(request: Request) {
+  try {
+    await requireUser(request);
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    if (contentLength > MAX_TEXT_LENGTH) {
+      return Response.json({ error: "PDF metni çok büyük" }, { status: 413 });
+    }
+
+    const body = (await request.json()) as PreviewRequest;
+    if (
+      typeof body.fileName !== "string" ||
+      !body.fileName.toLocaleLowerCase("tr-TR").endsWith(".pdf") ||
+      typeof body.fingerprint !== "string" ||
+      !/^[a-f0-9]{64}$/.test(body.fingerprint) ||
+      typeof body.text !== "string" ||
+      !body.text.trim()
+    ) {
+      return Response.json({ error: "PDF metni okunamadı" }, { status: 400 });
+    }
+    if (body.text.length > MAX_TEXT_LENGTH) {
+      return Response.json({ error: "PDF metni çok büyük" }, { status: 413 });
+    }
+
+    const existing = await db.productionImport.findUnique({ where: { fingerprint: body.fingerprint } });
+    const preview = parseProductionText(body.text, body.fileName, body.fingerprint);
+    return Response.json({ ...preview, duplicate: Boolean(existing), usedOcr: false });
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "PDF analiz edilemedi" },
+      { status: 400 },
+    );
+  }
+}
