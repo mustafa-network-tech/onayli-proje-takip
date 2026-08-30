@@ -11,7 +11,7 @@ async function sha256(file: File) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function extractPdfText(file: File) {
+async function extractPdfText(file: File, onProgress: (message: string) => void) {
   const pdfjs = await import("pdfjs-dist");
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
@@ -31,10 +31,46 @@ async function extractPdfText(file: File) {
       pages.push(text);
       page.cleanup();
     }
+
+    const embeddedText = pages.join("\n");
+    if (embeddedText.replace(/\s/g, "").length >= 50) return embeddedText;
+
+    onProgress("Taranmış PDF algılandı, OCR hazırlanıyor…");
+    const { createWorker } = await import("tesseract.js");
+    const worker = await createWorker(["tur", "eng"], 1, {
+      workerPath: "/tesseract-worker.min.js",
+      logger(message) {
+        if (message.status === "recognizing text") {
+          onProgress(`OCR yapılıyor… %${Math.round(message.progress * 100)}`);
+        }
+      },
+    });
+    const ocrPages: string[] = [];
+
+    try {
+      for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+        onProgress(`OCR: ${pageNumber}/${document.numPages}. sayfa`);
+        const page = await document.getPage(pageNumber);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = window.document.createElement("canvas");
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) throw new Error("PDF görüntüsü hazırlanamadı");
+        await page.render({ canvas, canvasContext: context, viewport }).promise;
+        const result = await worker.recognize(canvas);
+        ocrPages.push(result.data.text);
+        page.cleanup();
+        canvas.width = 1;
+        canvas.height = 1;
+      }
+    } finally {
+      await worker.terminate();
+    }
+    return ocrPages.join("\n");
   } finally {
     await loadingTask.destroy();
   }
-  return pages.join("\n");
 }
 
 export default function ProductionUpload() {
@@ -42,11 +78,13 @@ export default function ProductionUpload() {
   const [preview, setPreview] = useState<ProductionPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState("");
 
   async function analyze(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError("");
+    setProgress("PDF okunuyor…");
     try {
       const file = new FormData(event.currentTarget).get("file");
       if (!(file instanceof File) || !file.name.toLocaleLowerCase("tr-TR").endsWith(".pdf")) {
@@ -54,10 +92,11 @@ export default function ProductionUpload() {
       }
       if (file.size > MAX_PDF_SIZE) throw new Error("PDF en fazla 15 MB olabilir");
 
-      const [text, fingerprint] = await Promise.all([extractPdfText(file), sha256(file)]);
+      const [text, fingerprint] = await Promise.all([extractPdfText(file, setProgress), sha256(file)]);
       if (!text.trim()) {
-        throw new Error("PDF metin içermiyor. Taranmış görüntü PDF'leri şu anda desteklenmiyor.");
+        throw new Error("PDF içindeki metin OCR ile okunamadı");
       }
+      setProgress("İmalat kayıtları analiz ediliyor…");
       const response = await fetch("/api/performance/preview", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -70,6 +109,7 @@ export default function ProductionUpload() {
       setError(reason instanceof Error ? reason.message : "PDF analiz edilemedi");
     } finally {
       setBusy(false);
+      setProgress("");
     }
   }
 
@@ -135,6 +175,7 @@ export default function ProductionUpload() {
         <input type="file" name="file" accept="application/pdf,.pdf" required />
         <button disabled={busy}>{busy ? "Analiz ediliyor…" : "PDF Analiz Et"}</button>
       </div>
+      {progress && <p className="muted">{progress}</p>}
       {error && <p className="error">{error}</p>}
     </form>
     {preview && <div className="section">
