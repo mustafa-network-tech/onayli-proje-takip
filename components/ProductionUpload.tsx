@@ -7,8 +7,17 @@ import type { ProductionEntryInput, ProductionPreview } from "@/lib/production-t
 const MAX_PDF_SIZE = 15 * 1024 * 1024;
 
 async function sha256(file: File) {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (globalThis.crypto?.subtle) {
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  const [{ sha256: fallbackSha256 }, { bytesToHex }] = await Promise.all([
+    import("@noble/hashes/sha2.js"),
+    import("@noble/hashes/utils.js"),
+  ]);
+  return bytesToHex(fallbackSha256(bytes));
 }
 
 async function extractPdfText(file: File, onProgress: (message: string) => void) {
