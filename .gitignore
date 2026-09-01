@@ -5,6 +5,7 @@ node_modules
 .open-next
 .wrangler
 .env
+.env.local
 .dev.vars
 .dev.vars.*
 prisma/*.db*
