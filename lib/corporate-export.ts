@@ -12,8 +12,13 @@ export function corporateWorkbook(rows: CorporateProjectRow[], options: { status
       row.cableCompleted ? "Yapıldı" : "Yapılmadı", row.spliceCompleted ? "Yapıldı" : "Yapılmadı", corporateStatus(row).label, row.note]),
   ];
   const sheet = XLSX.utils.aoa_to_sheet(data);
-  sheet["!cols"] = [{ wch: 27 }, { wch: 65 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 55 }];
-  sheet["!rows"] = [{ hpt: 28 }, { hpt: 28 }, { hpt: 25 }, ...rows.map(row => ({ hpt: Math.max(30, Math.ceil((row.address ?? "").length / 55) * 16, Math.ceil(row.note.length / 45) * 16) }))];
+  const widths = [18, 40, 14, 10, 10, 16, 30];
+  sheet["!cols"] = widths.map(wch => ({ wch }));
+  sheet["!rows"] = [{ hpt: 28 }, { hpt: 28 }, { hpt: 25 }, ...data.slice(3).map(cells => ({
+    hpt: Math.min(409, Math.max(30, ...cells.map((value, column) =>
+      String(value).split(/\r\n|\r|\n/).reduce((lines, line) => lines + Math.max(1, Math.ceil(line.length / (widths[column] - 4))), 0) * 16 + 8))),
+  }))];
+  sheet["!margins"] = { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0.15, footer: 0.15 };
   sheet["!merges"] = [{ s: {r:0,c:0}, e: {r:0,c:6} }, { s: {r:1,c:0}, e: {r:1,c:6} }];
   sheet["!autofilter"] = { ref: `A3:G${rows.length + 3}` };
   for (let r = 0; r < data.length; r++) {
@@ -27,5 +32,23 @@ export function corporateWorkbook(rows: CorporateProjectRow[], options: { status
   }
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, "TTVPN PROJELERİ");
+  workbook.Workbook = { Names: [
+    { Name: "_xlnm.Print_Area", Sheet: 0, Ref: `'TTVPN PROJELERİ'!$A$1:$G$${data.length}` },
+    { Name: "_xlnm.Print_Titles", Sheet: 0, Ref: "'TTVPN PROJELERİ'!$1:$3" },
+  ] };
   return workbook;
+}
+
+export function corporateExcelBuffer(rows: CorporateProjectRow[], options: Parameters<typeof corporateWorkbook>[1] = {}): Buffer {
+  const buffer = XLSX.write(corporateWorkbook(rows, options), { type: "buffer", bookType: "xlsx" });
+  // xlsx-js-style does not serialize pageSetup. Add the print settings to the worksheet XML.
+  const archive = XLSX.CFB.read(buffer, { type: "buffer" });
+  const path = "/xl/worksheets/sheet1.xml";
+  const entry = XLSX.CFB.find(archive, path);
+  const xml = Buffer.from(entry.content).toString("utf8")
+    .replace(/(<worksheet\b[^>]*>)/, '$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>')
+    .replace(/(<pageMargins\b[^>]*\/>)/, '$1<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
+  if (!xml.includes('<pageSetup paperSize="9"')) throw new Error("Excel sayfa ayarları oluşturulamadı.");
+  XLSX.CFB.utils.cfb_add(archive, path, Buffer.from(xml, "utf8"));
+  return XLSX.CFB.write(archive, { type: "buffer", fileType: "zip", compression: true });
 }

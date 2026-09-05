@@ -6,7 +6,7 @@ import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { Prisma } from "@prisma/client";
 import { parseCorporateWorkbook } from "./corporate-excel";
 import { corporateStatus, type CorporateProjectRow } from "./corporate-shared";
-import { corporateWorkbook } from "./corporate-export";
+import { corporateExcelBuffer, corporateWorkbook } from "./corporate-export";
 import type { SqlCommand } from "./monthly-hp-sql";
 const mocks = vi.hoisted(() => ({ query: vi.fn(), execute: vi.fn(), batch: vi.fn() }));
 vi.mock("./db", () => ({ db: { $queryRaw: mocks.query, $executeRaw: mocks.execute } }));
@@ -82,8 +82,16 @@ it("filters all three progress states, district and ID consistently", async () =
 });
 it("exports panel headers, status, notes and a green fill across every completed row cell", () => {
   const base: CorporateProjectRow = { id:'x',projectId:'001',district:'BİGA-48',address:'TEST',cableCompleted:true,spliceCompleted:true,note:'' };
-  const workbook = corporateWorkbook([base,{...base,id:'y',projectId:'002',spliceCompleted:false}]);
-  const saved = XLSX.read(StyledXLSX.write(workbook,{type:'buffer',bookType:'xlsx'}),{type:'buffer',cellStyles:true});
+  const buffer = corporateExcelBuffer([base,{...base,id:'y',projectId:'002',spliceCompleted:false}]);
+  const saved = XLSX.read(buffer,{type:'buffer',cellStyles:true});
+  const archive = StyledXLSX.CFB.read(buffer, { type: 'buffer' });
+  const xml = Buffer.from(StyledXLSX.CFB.find(archive, '/xl/worksheets/sheet1.xml').content).toString('utf8');
+  expect(xml).toContain('<pageSetUpPr fitToPage="1"/>');
+  expect(xml).toContain('<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
+  expect(saved.Workbook?.Names).toEqual(expect.arrayContaining([
+    expect.objectContaining({ Name: '_xlnm.Print_Area', Ref: "'TTVPN PROJELERİ'!$A$1:$G$5" }),
+    expect.objectContaining({ Name: '_xlnm.Print_Titles', Ref: "'TTVPN PROJELERİ'!$1:$3" }),
+  ]));
   const sheet = saved.Sheets[saved.SheetNames[0]];
   expect(sheet.A1.v).toBe('TTVPN PROJELERİ');
   expect(XLSX.utils.sheet_to_json(sheet,{header:1})[2]).toEqual(['İlçe','Adres','ID','Kablo','Ek','Durum','Not']);
