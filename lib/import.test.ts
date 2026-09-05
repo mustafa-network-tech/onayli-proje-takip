@@ -1,4 +1,4 @@
-﻿import { readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import * as XLSX from "xlsx";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -14,6 +14,7 @@ beforeEach(() => {
  vi.stubEnv("NODE_ENV", "production");
  sqlite = new Database(":memory:");
  sqlite.exec(readFileSync("migrations/0001_initial.sql", "utf8"));
+ sqlite.exec(readFileSync("migrations/0002_monthly_hp.sql", "utf8"));
  sqlite.exec(`INSERT INTO User (id,name,email) VALUES ('u','Test','test@example.com')`);
  batches = 0;
  mocks.context.mockReturnValue({ env: { DB: {
@@ -56,8 +57,10 @@ it("replaces only the selected project type and rolls back a failed replacement"
  expect(sqlite.prepare('SELECT lastImportId FROM HpProject WHERE projectType = ?').get('BF')).toEqual({lastImportId:original.id});
  expect(sqlite.prepare('SELECT COUNT(*) AS n FROM HpBuilding').get()).toEqual({n:240});
  expect(sqlite.prepare('SELECT COUNT(*) AS n FROM HpExcelImport').get()).toEqual({n:2});
+ expect(sqlite.prepare('SELECT COUNT(*) AS n FROM HpMonthlyCompletion').get()).toEqual({n:2});
  sqlite.exec('DROP TRIGGER fail_building');
  const replacement = await commitImport(preview("BF",true),"u");
  expect(sqlite.prepare('SELECT lastImportId FROM HpProject WHERE projectType = ?').get('BF')).toEqual({lastImportId:replacement.id});
  expect(sqlite.prepare('SELECT COUNT(*) AS n FROM HpBuilding').get()).toEqual({n:240});
+ expect(sqlite.prepare('SELECT COUNT(*) AS n FROM HpMonthlyCompletion').get()).toEqual({n:2});
 });

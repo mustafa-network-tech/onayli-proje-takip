@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { parseWorkbook } from "./excel";
+import { completionCapture } from "./monthly-hp-sql";
 import type { ImportPreview, ParsedBuilding, ProjectImportDecision, ProjectType } from "./hp-types";
 
 const sourceData=(r:ParsedBuilding)=>({uavt:r.uavt,district:r.district,neighborhood:r.neighborhood,street:r.street,buildingName:r.buildingName,doorNumber:r.doorNumber,bbkHp:r.bbkHp,pstn:r.pstn,dsl:r.dsl,infrastructureStatus:r.infrastructureStatus,workProgressDate:r.workProgressDate,rekorDate:r.rekorDate,equivalentBuildingCode:r.equivalentBuildingCode,csbmCode:r.csbmCode});
@@ -29,6 +30,8 @@ export async function commitImport(preview:ImportPreview,userId:string){
    const first=rows[0],project=await tx.hpProject.create({data:{projectId,projectType:preview.projectType,centralName:first.centralName,projectYear:first.projectYear,lastImportId:log.id}});
    const now=new Date();await tx.hpBuilding.createMany({data:rows.map(row=>({projectRefId:project.id,sourceKey:row.sourceKey,isActive:true,...sourceData(row),cableCompleted:row.excelCompleted,cableCompletedAt:row.excelCompleted?now:null,spliceCompleted:row.excelCompleted,spliceCompletedAt:row.excelCompleted?now:null,obkCompleted:preview.projectType==="BF"&&row.excelCompleted,obkCompletedAt:preview.projectType==="BF"&&row.excelCompleted?now:null}))});
   }
+  const capture = completionCapture("import", log.id);
+  await tx.$executeRawUnsafe(capture.sql, ...capture.values);
   return log;
  });
 }
@@ -75,6 +78,8 @@ async function commitD1Import(preview: ImportPreview, userId: string) {
   }
  }
  // Keep the whole import atomic, including removal of replaced projects.
+ const capture = completionCapture("import", id);
+ statements.push(connection.prepare(capture.sql).bind(...capture.values));
  await connection.batch(statements);
  return { id };
 }

@@ -111,6 +111,27 @@ model HpExcelImport {
   errorReport String?
 }
 
+// Independent snapshots keep monthly production history across Excel replacement.
+model HpMonthlyCompletion {
+  id String @id @default(cuid())
+  projectId String
+  projectType String
+  sourceKey String
+  uavt String?
+  district String?
+  neighborhood String?
+  street String?
+  buildingName String?
+  doorNumber String?
+  hp Int
+  month String
+  origin String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  @@unique([projectType, projectId, sourceKey])
+  @@index([month, projectType])
+}
+
 model Team {
   id String @id @default(cuid())
   name String
@@ -118,6 +139,34 @@ model Team {
   entries ProductionEntry[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model CorporateImport {
+  id String @id @default(cuid())
+  fileName String
+  totalRows Int
+  importedBy String
+  importedAt DateTime @default(now())
+}
+
+model CorporateProject {
+  id String @id @default(cuid())
+  projectId String @unique
+  district String?
+  address String?
+  centralName String?
+  drawingName String?
+  projectFeature String?
+  approvalStatus String?
+  cableCompleted Boolean @default(false)
+  spliceCompleted Boolean @default(false)
+  note String @default("")
+  districtEdited Boolean @default(false)
+  addressEdited Boolean @default(false)
+  lastImportId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  @@index([district])
 }
 
 model ProductionImport {

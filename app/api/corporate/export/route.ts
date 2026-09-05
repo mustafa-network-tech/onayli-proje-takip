@@ -1,0 +1,33 @@
+import * as XLSX from "xlsx-js-style";
+import { requireUser } from "@/lib/auth";
+import { corporateFilterSchema, findCorporateProjects } from "@/lib/corporate";
+import { corporateWorkbook } from "@/lib/corporate-export";
+import { z } from "zod";
+
+export async function GET(request: Request) {
+  try {
+    await requireUser(request);
+    const filters = corporateFilterSchema.parse(Object.fromEntries(new URL(request.url).searchParams));
+    const rows = await findCorporateProjects(filters);
+    const buffer = XLSX.write(corporateWorkbook(rows, filters), { type: "buffer", bookType: "xlsx" });
+    return new Response(new Uint8Array(buffer), { headers: {
+      "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "content-disposition": `attachment; filename="TTVPN-Projeleri-${filters.status}.xlsx"`, "cache-control": "no-store",
+    } });
+  } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Çıktı oluşturulamadı." }, { status: 400 }); }
+}
+
+export async function POST(request: Request) {
+  try {
+    await requireUser(request);
+    const { ids } = z.object({ ids: z.array(z.string().min(1).max(100)).min(1).max(10000) }).parse(await request.json());
+    const selected = new Set(ids);
+    const rows = (await findCorporateProjects({ status: "all" })).filter(row => selected.has(row.id));
+    if (rows.length !== selected.size) return Response.json({ error: "Seçilen bazı projeler bulunamadı. Listeyi yenileyip tekrar seçin." }, { status: 409 });
+    const buffer = XLSX.write(corporateWorkbook(rows, { selected: true }), { type: "buffer", bookType: "xlsx" });
+    return new Response(new Uint8Array(buffer), { headers: {
+      "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "content-disposition": 'attachment; filename="TTVPN-Projeleri-Secilenler.xlsx"', "cache-control": "no-store",
+    } });
+  } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Seçilenlerin çıktısı oluşturulamadı." }, { status: 400 }); }
+}
