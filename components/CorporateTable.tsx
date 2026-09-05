@@ -3,12 +3,32 @@ import { useState } from "react";
 import Link from "next/link";
 import { CorporateNoteForm, CorporateProgress } from "./CorporateActions";
 import CorporateCreateForm from "./CorporateCreateForm";
-import { corporateStatus, filterCorporateProjects, type CorporateProjectRow, type CorporateStatus } from "@/lib/corporate-shared";
+import { corporateStatus, filterCorporateProjects, type CorporateProjectRow, type CorporateStatus, type CorporateFilters } from "@/lib/corporate-shared";
 
-type Filters = { district?: string; q?: string; status: CorporateStatus };
 const states = [["all", "Tüm Projeler"], ["not_started", "Başlanmadı"], ["ongoing", "Devam Ediyor"], ["completed", "Tamamlandı"]] as const;
 
-export default function CorporateTable({ projects, initialFilters }: { projects: CorporateProjectRow[]; initialFilters: Filters }) {
+function DistrictFilter({ districts, initialSelected = [] }: { districts: string[]; initialSelected?: string[] }) {
+  const [selectedDistricts, setSelectedDistricts] = useState(initialSelected);
+  return <details className="corporate-district-filter" onKeyDown={event => { if (event.key === "Escape") event.currentTarget.open = false; }}>
+    <summary>İlçeler: {selectedDistricts.length ? `${selectedDistricts.length} seçili` : "Tümü"}</summary>
+    <div className="corporate-district-menu">
+      <p className="muted">Birden fazla ilçe seçebilirsiniz. Seçim yoksa tüm ilçeler gösterilir.</p>
+      <button type="button" className="secondary" onClick={() => setSelectedDistricts([])}>İlçe Seçimini Temizle</button>
+      <div className="corporate-district-options" role="group" aria-label="İlçeler">
+        {districts.map(district => <label key={district}>
+          <input type="checkbox" name="district" value={district} checked={selectedDistricts.includes(district)} onChange={event => {
+            const checked = event.target.checked;
+            setSelectedDistricts(previous => checked ? [...previous, district] : previous.filter(value => value !== district));
+          }} />
+          <span>{district}</span>
+        </label>)}
+        {!districts.length && <p className="muted">Kayıtlı ilçe bulunmuyor.</p>}
+      </div>
+    </div>
+  </details>;
+}
+
+export default function CorporateTable({ projects, initialFilters }: { projects: CorporateProjectRow[]; initialFilters: CorporateFilters }) {
   const [filters, setFilters] = useState(initialFilters);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [selectionOnly, setSelectionOnly] = useState(false);
@@ -17,8 +37,9 @@ export default function CorporateTable({ projects, initialFilters }: { projects:
   const selectedRows = projects.filter(row => selected.has(row.id));
   const matching = filterCorporateProjects(projects, { ...filters, status: "all" });
   const rows = selectionOnly ? selectedRows : matching.filter(row => filters.status === "all" || corporateStatus(row).key === filters.status);
-  const districts = [...new Set(projects.map(row => row.district).filter((district): district is string => !!district))].sort((a,b) => a.localeCompare(b,"tr"));
-  const query = new URLSearchParams({ status: filters.status, ...(filters.district ? { district: filters.district } : {}), ...(filters.q ? { q: filters.q } : {}) }).toString();
+  const districts = [...new Set([...projects.map(row => row.district).filter((district): district is string => !!district), ...(filters.district ?? [])])].sort((a,b) => a.localeCompare(b,"tr"));
+  const query = new URLSearchParams({ status: filters.status, ...(filters.q ? { q: filters.q } : {}) });
+  filters.district?.forEach(district => query.append("district", district));
   function toggle(id: string) { setSelected(previous => { const next = new Set(previous); next.has(id) ? next.delete(id) : next.add(id); return next; }); }
   function selectVisible(value: boolean) { setSelected(previous => { const next = new Set(previous); rows.forEach(row => value ? next.add(row.id) : next.delete(row.id)); return next; }); }
   async function downloadSelected() {
@@ -40,14 +61,15 @@ export default function CorporateTable({ projects, initialFilters }: { projects:
     }} />}
     {notice && <p role="status">{notice}</p>}
     <div className="grid">{states.map(([state,label]) => <div className="card kpi" key={state}><span>{label}</span><strong>{(state === "all" ? matching.length : matching.filter(row => corporateStatus(row).key === state).length).toLocaleString("tr-TR")}</strong></div>)}</div>
-    <form key={JSON.stringify(filters)} className="filters section" onSubmit={event => { event.preventDefault(); const data = new FormData(event.currentTarget); setFilters({district:String(data.get("district") ?? ""),q:String(data.get("q") ?? ""),status:String(data.get("status")) as CorporateStatus}); setSelectionOnly(false); }}>
-      <select aria-label="İlçe" name="district" defaultValue={filters.district ?? ""}><option value="">Tüm İlçeler</option>{districts.map(district => <option key={district}>{district}</option>)}</select>
+    <form key={JSON.stringify(filters)} className="filters section" onSubmit={event => { event.preventDefault(); const data = new FormData(event.currentTarget); setFilters({district:data.getAll("district").map(String),q:String(data.get("q") ?? ""),status:String(data.get("status")) as CorporateStatus}); setSelectionOnly(false); }}>
+      <DistrictFilter districts={districts} initialSelected={filters.district} />
       <input aria-label="ID veya adres ara" name="q" placeholder="ID veya adres ara" maxLength={200} defaultValue={filters.q} />
       <select aria-label="Durum" name="status" defaultValue={filters.status}>{states.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
       <button>Filtrele</button>
       {!selectionOnly && <a className="button" href={`/api/corporate/export?${query}`}>Filtrelenenleri Excel Al</a>}
       <a className="button" href="/api/corporate/export?status=all">Komple Excel Al</a>
     </form>
+    {!!filters.district?.length && !selectionOnly && <p className="muted">Seçilen ilçeler: {filters.district.join(", ")}</p>}
     <div className="card filters corporate-selection"><b>{selectedRows.length} proje seçili</b>
       <button type="button" className="secondary" disabled={!selectedRows.length && !selectionOnly} onClick={() => setSelectionOnly(!selectionOnly)}>{selectionOnly ? "Filtrelenen Listeye Dön" : "Seçilenleri Listele"}</button>
       <button type="button" disabled={busy || !selectedRows.length} onClick={downloadSelected}>{busy ? "Hazırlanıyor…" : "Seçilenleri Excel Al"}</button>

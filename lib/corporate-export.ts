@@ -1,9 +1,9 @@
 import * as XLSX from "xlsx-js-style";
-import { corporateStatus, type CorporateProjectRow, type CorporateStatus } from "./corporate-shared";
+import { corporateStatus, type CorporateProjectRow, type CorporateFilters } from "./corporate-shared";
 
-export function corporateWorkbook(rows: CorporateProjectRow[], options: { status?: CorporateStatus; district?: string; q?: string; selected?: boolean } = {}) {
+export function corporateWorkbook(rows: CorporateProjectRow[], options: Partial<CorporateFilters> & { selected?: boolean } = {}) {
   const labels = { all: "Tüm Projeler", completed: "Tamamlanan Projeler", ongoing: "Devam Eden Projeler", not_started: "Başlanmayan Projeler" };
-  const subtitle = [options.selected ? "Seçilen Projeler" : labels[options.status ?? "all"], options.district ? `İlçe: ${options.district}` : "", options.q ? `Arama: ${options.q}` : "", `${rows.length} proje`].filter(Boolean).join(" · ");
+  const subtitle = [options.selected ? "Seçilen Projeler" : labels[options.status ?? "all"], options.district?.length ? `İlçe: ${options.district.join(", ")}` : "", options.q ? `Arama: ${options.q}` : "", `${rows.length} proje`].filter(Boolean).join(" · ");
   const data = [
     ["TTVPN PROJELERİ", "", "", "", "", "", ""],
     [subtitle, "", "", "", "", "", ""],
@@ -14,7 +14,8 @@ export function corporateWorkbook(rows: CorporateProjectRow[], options: { status
   const sheet = XLSX.utils.aoa_to_sheet(data);
   const widths = [18, 40, 14, 10, 10, 16, 30];
   sheet["!cols"] = widths.map(wch => ({ wch }));
-  sheet["!rows"] = [{ hpt: 28 }, { hpt: 28 }, { hpt: 25 }, ...data.slice(3).map(cells => ({
+  const subtitleHeight = Math.min(409, Math.max(28, Math.ceil(subtitle.length / 120) * 16 + 8));
+  sheet["!rows"] = [{ hpt: 28 }, { hpt: subtitleHeight }, { hpt: 25 }, ...data.slice(3).map(cells => ({
     hpt: Math.min(409, Math.max(30, ...cells.map((value, column) =>
       String(value).split(/\r\n|\r|\n/).reduce((lines, line) => lines + Math.max(1, Math.ceil(line.length / (widths[column] - 4))), 0) * 16 + 8))),
   }))];

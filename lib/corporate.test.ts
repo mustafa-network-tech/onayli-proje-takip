@@ -11,7 +11,9 @@ import type { SqlCommand } from "./monthly-hp-sql";
 const mocks = vi.hoisted(() => ({ query: vi.fn(), execute: vi.fn(), batch: vi.fn() }));
 vi.mock("./db", () => ({ db: { $queryRaw: mocks.query, $executeRaw: mocks.execute } }));
 vi.mock("./sql-batch", () => ({ executeSqlBatch: mocks.batch }));
-import { commitCorporateImport, corporateCommitSchema, corporateCreateSchema, createCorporateProject, findCorporateProjects, previewCorporateImport } from "./corporate";
+vi.mock("./auth", () => ({ requireUser: vi.fn().mockResolvedValue({ id: "u" }) }));
+import { GET as exportCorporateProjects } from "../app/api/corporate/export/route";
+import { commitCorporateImport, corporateCommitSchema, corporateCreateSchema, corporateFilterSchema, createCorporateProject, findCorporateProjects, previewCorporateImport } from "./corporate";
 
 let sqlite: Database.Database;
 function source(rows: Record<string, unknown>[]) {
@@ -76,9 +78,48 @@ it("filters all three progress states, district and ID consistently", async () =
   for (const [status, id] of [["completed","001"],["ongoing","002"],["not_started","003"]] as const) {
     expect((await findCorporateProjects({status})).map(row=>row.projectId)).toEqual([id]);
   }
-  expect((await findCorporateProjects({status:'all',district:'BİGA-48'}))).toHaveLength(1);
+  expect((await findCorporateProjects({status:'all',district:['BİGA-48']}))).toHaveLength(1);
   expect((await findCorporateProjects({status:'all',q:'003'}))[0].projectId).toBe('003');
   expect(corporateStatus({cableCompleted:false,spliceCompleted:true}).label).toBe('Devam Ediyor');
+});
+it("accepts single and multiple districts, removes duplicates and keeps comma-containing names intact", () => {
+  expect(corporateFilterSchema.parse({ district: "BİGA-48" }).district).toEqual(["BİGA-48"]);
+  expect(corporateFilterSchema.parse({ district: ["BİGA-48", "", "BİGA-48", "LAPSEKİ-49,ÇARDAK-49"] }).district).toEqual(["BİGA-48", "LAPSEKİ-49,ÇARDAK-49"]);
+  expect(corporateFilterSchema.parse({ district: "" }).district).toEqual([]);
+  expect(corporateFilterSchema.safeParse({ district: [42] }).success).toBe(false);
+});
+it("combines selected districts with status and search and restores all projects when cleared", async () => {
+  await commitCorporateImport(await previewCorporateImport(fixture(), "test.xlsx"), "u");
+  sqlite.exec("UPDATE CorporateProject SET cableCompleted=1,spliceCompleted=1 WHERE projectId IN ('001','003')");
+  const district = ["BİGA-48", "LAPSEKİ-49,ÇARDAK-49"];
+  expect((await findCorporateProjects({ status: "all", district })).map(row => row.projectId)).toEqual(["001", "002"]);
+  expect((await findCorporateProjects({ status: "completed", district })).map(row => row.projectId)).toEqual(["001"]);
+  expect((await findCorporateProjects({ status: "all", district, q: "örnek" })).map(row => row.projectId)).toEqual(["002"]);
+  expect(await findCorporateProjects({ status: "completed", district, q: "örnek" })).toHaveLength(0);
+  expect(await findCorporateProjects({ status: "all", district: ["YOK"] })).toHaveLength(0);
+  expect(await findCorporateProjects({ status: "all", district: [] })).toHaveLength(3);
+});
+it("exports every selected district from repeated URL parameters with the same filters and A4 settings", async () => {
+  await commitCorporateImport(await previewCorporateImport(fixture(), "test.xlsx"), "u");
+  sqlite.exec("UPDATE CorporateProject SET cableCompleted=1,spliceCompleted=1 WHERE projectId IN ('001','003')");
+  const params = new URLSearchParams({ status: "all" });
+  params.append("district", "BİGA-48");
+  params.append("district", "LAPSEKİ-49,ÇARDAK-49");
+  const response = await exportCorporateProjects(new Request(`http://localhost/api/corporate/export?${params}`));
+  expect(response.status).toBe(200);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const saved = XLSX.read(buffer, { type: "buffer", cellStyles: true });
+  const sheet = saved.Sheets[saved.SheetNames[0]];
+  expect((XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][]).slice(3).map(row => row[2])).toEqual(["001", "002"]);
+  expect(sheet.A2.v).toContain("İlçe: BİGA-48, LAPSEKİ-49,ÇARDAK-49");
+  expect(sheet.A4.s.fgColor.rgb).toBe("C6EFCE");
+  const archive = StyledXLSX.CFB.read(buffer, { type: "buffer" });
+  const xml = Buffer.from(StyledXLSX.CFB.find(archive, "/xl/worksheets/sheet1.xml").content).toString("utf8");
+  expect(xml).toContain('<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
+  params.set("status", "completed");
+  const completedResponse = await exportCorporateProjects(new Request(`http://localhost/api/corporate/export?${params}`));
+  const completed = XLSX.read(Buffer.from(await completedResponse.arrayBuffer()), { type: "buffer" });
+  expect((XLSX.utils.sheet_to_json(completed.Sheets[completed.SheetNames[0]], { header: 1 }) as string[][]).slice(3).map(row => row[2])).toEqual(["001"]);
 });
 it("exports panel headers, status, notes and a green fill across every completed row cell", () => {
   const base: CorporateProjectRow = { id:'x',projectId:'001',district:'BİGA-48',address:'TEST',cableCompleted:true,spliceCompleted:true,note:'' };

@@ -20,6 +20,8 @@ Excel yükleme `/corporate/import`, liste `/corporate` adresindedir. Ön izleme 
 
 Panelde İlçe, Adres, ID, Kablo, Ek, Durum ve Not gösterilir. Onaylandı, İl Adı ve Proje Özelliği alanları panelde ve çıktıda gösterilmez. Excel çıktısı aynı sütun başlıklarını kullanır; rapor başlığı **TTVPN PROJELERİ** olur. Alt başlıkta seçilen durum, ilçe/arama filtresi ve proje sayısı belirtilir.
 
+İlçeler menüsündeki kutulardan birden fazla ilçe seçilip **Filtrele** düğmesiyle uygulanabilir. Seçilen ilçelerin projeleri birlikte listelenir; durum ve ID/adres araması bu listeye uygulanır. Hiç ilçe seçilmezse tüm ilçeler gösterilir. **İlçe Seçimini Temizle** ardından **Filtrele** ile ilçe kısıtlaması kaldırılır. Sayaçlar ve **Filtrelenenleri Excel Al** aynı ilçe seçimini kullanır; çıktı alt başlığında seçilen ilçeler yer alır. Eski tek ilçeli bağlantılar da çalışır.
+
 Durum filtresiyle tamamlananlar, devam edenler ve başlanmayanlar ayrı indirilebilir. Komple Excel Al tüm Kurumsal kayıtlarını indirir. Her durumdaki projede seçim kutusu vardır. Filtre değiştirirken mevcut seçimler korunur; Seçilenleri Listele tüm filtrelerden seçilmiş projeleri birleştirir. Seçilenleri Excel Al yalnızca bu projeleri dışa aktarır. Seçimler sayfa açıkken korunur; sayfa tamamen yenilenirse temizlenir.
 
 Tamamlanan satırlar, seçili çıktı dahil, yedi sütunun tamamında yeşildir. PDF çıktısı yoktur.

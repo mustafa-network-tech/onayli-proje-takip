@@ -6,7 +6,8 @@ import { z } from "zod";
 export async function GET(request: Request) {
   try {
     await requireUser(request);
-    const filters = corporateFilterSchema.parse(Object.fromEntries(new URL(request.url).searchParams));
+    const params = new URL(request.url).searchParams;
+    const filters = corporateFilterSchema.parse({ ...Object.fromEntries(params), district: params.getAll("district") });
     const rows = await findCorporateProjects(filters);
     const buffer = corporateExcelBuffer(rows, filters);
     return new Response(new Uint8Array(buffer), { headers: {

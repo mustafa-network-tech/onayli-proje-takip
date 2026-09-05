@@ -1,4 +1,5 @@
 export type CorporateStatus = "all" | "completed" | "ongoing" | "not_started";
+export type CorporateFilters = { district?: string[]; q?: string; status: CorporateStatus };
 export type CorporateSource = {
   projectId: string; district: string | null; address: string | null;
   centralName: string | null; drawingName: string | null;
@@ -17,9 +18,10 @@ export function corporateStatus(row: { cableCompleted: boolean; spliceCompleted:
   return { key: "not_started", label: "Başlanmadı" } as const;
 }
 
-export function filterCorporateProjects(rows: CorporateProjectRow[], filters: { district?: string; q?: string; status: CorporateStatus }) {
+export function filterCorporateProjects(rows: CorporateProjectRow[], filters: CorporateFilters) {
   const search = filters.q?.trim().toLocaleLowerCase("tr-TR") ?? "";
-  return rows.filter(row => (!filters.district || row.district === filters.district)
+  const districts = new Set(filters.district);
+  return rows.filter(row => (!districts.size || (row.district !== null && districts.has(row.district)))
     && (!search || `${row.projectId} ${row.address ?? ""}`.toLocaleLowerCase("tr-TR").includes(search))
     && (filters.status === "all" || corporateStatus(row).key === filters.status));
 }

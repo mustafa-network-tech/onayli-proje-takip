@@ -61,7 +61,12 @@ export async function commitCorporateImport(input: z.infer<typeof corporateCommi
   return id;
 }
 
-export const corporateFilterSchema = z.object({ district: z.string().max(200).optional(), q: z.string().max(200).optional(), status: z.enum(["all", "completed", "ongoing", "not_started"]).default("all") });
+export const corporateFilterSchema = z.object({
+  district: z.union([z.string().max(2000), z.array(z.string().max(2000)).max(10000)])
+    .transform(value => [...new Set((Array.isArray(value) ? value : [value]).filter(Boolean))]).optional(),
+  q: z.string().max(200).optional(),
+  status: z.enum(["all", "completed", "ongoing", "not_started"]).default("all"),
+});
 export type CorporateFilters = z.infer<typeof corporateFilterSchema>;
 export async function findCorporateProjects(filters: CorporateFilters) {
   const rows = await db.$queryRaw<CorporateProjectRow[]>`SELECT "id","projectId","district","address","cableCompleted","spliceCompleted","note" FROM "CorporateProject" ORDER BY "district","projectId"`;
