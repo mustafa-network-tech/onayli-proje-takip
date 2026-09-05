@@ -6,6 +6,23 @@ import { parseCorporateWorkbook } from "./corporate-excel";
 import type { SqlCommand } from "./monthly-hp-sql";
 
 const nullableText = z.string().max(2000).nullable();
+export const corporateCreateSchema = z.object({
+  projectId: z.string().trim().min(1, "ID gerekli.").max(100),
+  district: z.string().trim().min(1, "İlçe gerekli.").max(200),
+  address: z.string().trim().min(1, "Adres gerekli.").max(2000),
+  note: z.string().trim().max(2000).default(""),
+}).strict();
+
+export async function createCorporateProject(input: z.infer<typeof corporateCreateSchema>) {
+  const data = corporateCreateSchema.parse(input);
+  const id = crypto.randomUUID();
+  const count = await db.$executeRaw`INSERT INTO "CorporateProject"
+    ("id","projectId","district","address","note","districtEdited","addressEdited")
+    VALUES (${id},${data.projectId},${data.district},${data.address},${data.note},1,1)
+    ON CONFLICT("projectId") DO NOTHING`;
+  return count ? id : null;
+}
+
 export const corporateCommitSchema = z.object({ fileName: z.string().min(1).max(255), rows: z.array(z.object({
   projectId: z.string().trim().min(1).max(100), district: nullableText, address: nullableText,
   centralName: nullableText, drawingName: nullableText, projectFeature: nullableText, approvalStatus: nullableText,

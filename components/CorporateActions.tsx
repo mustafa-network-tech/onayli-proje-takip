@@ -18,21 +18,19 @@ export function CorporateProgress({ id, field, done }: { id: string; field: "cab
   }
   return <><button type="button" className={done ? "corporate-done" : "secondary"} disabled={busy} aria-pressed={done} aria-label={`${field === "cable" ? "Kablo" : "Ek"}: ${done ? "Yapıldı" : "Yapılmadı"}`} onClick={toggle}>{busy ? "Kaydediliyor…" : done ? "✓ Yapıldı" : "○ Yapılmadı"}</button>{error && <p className="error" role="alert">{error}</p>}</>;
 }
-export function CorporateEdit({ id, district, address, note }: { id: string; district: string | null; address: string | null; note: string }) {
+export function CorporateNoteForm({ id, note }: { id: string; note: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError("");
     const data = new FormData(event.currentTarget);
-    try { await update(id, { district: data.get("district"), address: data.get("address"), note: data.get("note") }); router.refresh(); }
+    try { await update(id, { note: data.get("note") }); router.refresh(); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Kaydedilemedi."); }
     finally { setBusy(false); }
   }
-  return <details className="corporate-edit"><summary>İlçe / Adres / Not Düzenle</summary><form onSubmit={save}>
-    <label>İlçe<input name="district" defaultValue={district ?? ""} maxLength={200} /></label>
-    <label>Adres<textarea name="address" defaultValue={address ?? ""} maxLength={2000} rows={3} /></label>
+  return <details className="corporate-edit"><summary>{note ? "Notu Düzenle" : "Not Ekle"}</summary><form onSubmit={save}>
     <label>Not<textarea name="note" defaultValue={note} maxLength={2000} rows={3} /></label>
-    <button disabled={busy}>{busy ? "Kaydediliyor…" : "Kaydet"}</button>
+    <button disabled={busy}>{busy ? "Kaydediliyor…" : "Notu Kaydet"}</button>
     {error && <p className="error" role="alert">{error}</p>}
   </form></details>;
 }

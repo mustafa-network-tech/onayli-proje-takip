@@ -2,6 +2,8 @@
 
 Kurumsal ayrı bir ana kategoridir; GF/BF, HP Odaklı Projeler altında kalır. Kurumsal kayıtlarında HP alanı yoktur ve aylık HP toplamlarına katılmazlar.
 
+**Manuel Proje Ekle** düğmesinden İlçe, Adres ve ID girilerek Excel olmadan proje açılabilir. Not isteğe bağlıdır. Yeni kayıt Başlanmadı durumundadır, normal liste ve seçim/Excel çıktılarında yer alır. Mevcut bir ID ile yeni kayıt açılamaz. Elle girilen ilçe/adres ve not, sonraki Excel yüklemelerinde korunur. Bu özellik için ek migration gerekmez.
+
 ## Excel eşleştirmesi
 
 | Excel sütunu | Panel ve çıktı başlığı |
@@ -10,7 +12,7 @@ Kurumsal ayrı bir ana kategoridir; GF/BF, HP Odaklı Projeler altında kalır. 
 | CIZIM_ADI | Adres |
 | CIZIM_ID | ID |
 
-Değerler aynen alınır; örneğin `BİGA-48` değeri İlçe alanında `BİGA-48` olarak görünür. İlçe ve adres panelden düzenlenebilir.
+Değerler aynen alınır; örneğin `BİGA-48` değeri İlçe alanında `BİGA-48` olarak görünür. Kayıtlı projelerde ilçe ve adres salt okunurdur. Panelde yalnızca not eklenebilir/düzenlenebilir; Kablo ve Ek işaretleri kullanılmaya devam eder. Yeni manuel proje oluşturulurken ilçe ve adres girilir.
 
 Yeni projeler Başlanmadı durumunda açılır. Kablo veya Ek'ten biri Yapıldı ise Devam Ediyor, ikisi de Yapıldı ise Tamamlandı gösterilir. İşaret kaldırıldığında durum yeniden hesaplanır. Excel'deki onay durumu veya hücre rengi imalat durumunu belirlemez.
 

@@ -8,10 +8,10 @@ import { parseCorporateWorkbook } from "./corporate-excel";
 import { corporateStatus, type CorporateProjectRow } from "./corporate-shared";
 import { corporateWorkbook } from "./corporate-export";
 import type { SqlCommand } from "./monthly-hp-sql";
-const mocks = vi.hoisted(() => ({ query: vi.fn(), batch: vi.fn() }));
-vi.mock("./db", () => ({ db: { $queryRaw: mocks.query } }));
+const mocks = vi.hoisted(() => ({ query: vi.fn(), execute: vi.fn(), batch: vi.fn() }));
+vi.mock("./db", () => ({ db: { $queryRaw: mocks.query, $executeRaw: mocks.execute } }));
 vi.mock("./sql-batch", () => ({ executeSqlBatch: mocks.batch }));
-import { commitCorporateImport, corporateCommitSchema, findCorporateProjects, previewCorporateImport } from "./corporate";
+import { commitCorporateImport, corporateCommitSchema, corporateCreateSchema, createCorporateProject, findCorporateProjects, previewCorporateImport } from "./corporate";
 
 let sqlite: Database.Database;
 function source(rows: Record<string, unknown>[]) {
@@ -31,6 +31,10 @@ beforeEach(() => {
   mocks.query.mockImplementation((query: Prisma.Sql | TemplateStringsArray, ...values: unknown[]) => {
     const statement = Array.isArray(query) ? Prisma.sql(query as TemplateStringsArray, ...values) : query as Prisma.Sql;
     return Promise.resolve(sqlite.prepare(statement.sql).all(...statement.values));
+  });
+  mocks.execute.mockImplementation((query: TemplateStringsArray, ...values: unknown[]) => {
+    const statement = Prisma.sql(query, ...values);
+    return Promise.resolve(sqlite.prepare(statement.sql).run(...statement.values).changes);
   });
   mocks.batch.mockImplementation(async (commands: SqlCommand[]) => sqlite.transaction(() => commands.map(command => {
     expect(command.values.length).toBeLessThanOrEqual(100);
@@ -96,4 +100,27 @@ it("rejects duplicate IDs at commit and rolls back an entire failed import", asy
   await expect(commitCorporateImport(preview,"u")).rejects.toThrow('test failure');
   expect(sqlite.prepare('SELECT COUNT(*) AS n FROM CorporateProject').get()).toEqual({n:0});
   expect(sqlite.prepare('SELECT COUNT(*) AS n FROM CorporateImport').get()).toEqual({n:0});
+});
+
+it("creates a manual unstarted project, exports it and preserves its fields on Excel upload", async () => {
+  const id = await createCorporateProject({ projectId: " 001 ", district: "Manuel ilçe", address: "Manuel adres", note: "Manuel not" });
+  expect(id).toBeTruthy();
+  let rows = await findCorporateProjects({ status: "not_started" });
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ id, projectId: "001", district: "Manuel ilçe", address: "Manuel adres", note: "Manuel not", cableCompleted: false, spliceCompleted: false });
+  const exported = corporateWorkbook(rows);
+  expect(exported.Sheets[exported.SheetNames[0]].C4.v).toBe("001");
+  await commitCorporateImport(await previewCorporateImport(fixture(), "test.xlsx"), "u");
+  rows = await findCorporateProjects({ status: "all", q: "001" });
+  expect(rows[0]).toMatchObject({ id, district: "Manuel ilçe", address: "Manuel adres", note: "Manuel not" });
+});
+it("rejects duplicate manual IDs without overwriting the original project", async () => {
+  await commitCorporateImport(await previewCorporateImport(fixture(), "test.xlsx"), "u");
+  expect(await createCorporateProject({ projectId: "001", district: "Changed", address: "Changed", note: "Changed" })).toBeNull();
+  expect((await findCorporateProjects({status:"all",q:"001"}))[0]).toMatchObject({district:"BİGA-48",address:"UCA1058",note:""});
+});
+it("validates required manual fields and prevents setting completion through project creation", () => {
+  for (const field of ["projectId","district","address"]) expect(corporateCreateSchema.safeParse({projectId:"1",district:"İlçe",address:"Adres",[field]:"  "}).success).toBe(false);
+  expect(corporateCreateSchema.parse({projectId:"1",district:"İlçe",address:"Adres"}).note).toBe("");
+  expect(corporateCreateSchema.safeParse({projectId:"1",district:"İlçe",address:"Adres",cableCompleted:true}).success).toBe(false);
 });

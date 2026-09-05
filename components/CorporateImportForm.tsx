@@ -30,7 +30,7 @@ export default function CorporateImportForm() {
   return <>
     <form className="card" onSubmit={inspect}><div className="filters"><input aria-label="Kurumsal Excel dosyası" type="file" name="file" accept=".xlsx" required disabled={busy} onChange={() => setPreview(null)} /><button disabled={busy}>{busy ? "İşleniyor…" : "Ön İzleme Oluştur"}</button></div>
       <p className="muted">SANTRAL_ADI → İlçe · CIZIM_ADI → Adres · CIZIM_ID → ID</p>
-      <p>Yeni kayıtlar “Başlanmadı” olarak açılır. Aynı ID yeniden yüklenirse Kablo, Ek, notlar ve panelde düzenlediğiniz ilçe/adres korunur.</p>
+      <p>Yeni kayıtlar “Başlanmadı” olarak açılır. Aynı ID yeniden yüklenirse Kablo, Ek, notlar ve elle girilmiş ilçe/adres korunur.</p>
     </form>
     {error && <p className="error" role="alert">{error}</p>}
     {preview && <section className="section"><div className="grid">{[["Okunan Satır", preview.totalRows], ["Yeni Kayıt", preview.newProjects], ["Güncellenecek Kayıt", preview.existingProjects], ["Hatalı Satır", preview.errors.length]].map(([label, value]) => <div className="card kpi" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
