@@ -3,6 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { CorporateNoteForm, CorporateProgress } from "./CorporateActions";
 import CorporateCreateForm from "./CorporateCreateForm";
+import ExcelShareButton from "./ExcelShareButton";
+import { downloadExcelFile, fetchExcelFile } from "@/lib/excel-sharing";
 import { corporateStatus, filterCorporateProjects, type CorporateProjectRow, type CorporateStatus, type CorporateFilters } from "@/lib/corporate-shared";
 
 const states = [["all", "Tüm Projeler"], ["not_started", "Başlanmadı"], ["ongoing", "Devam Ediyor"], ["completed", "Tamamlandı"]] as const;
@@ -45,12 +47,7 @@ export default function CorporateTable({ projects, initialFilters }: { projects:
   async function downloadSelected() {
     setBusy(true); setError("");
     try {
-      const response = await fetch("/api/corporate/export", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids: selectedRows.map(row => row.id) }) });
-      if (!response.ok) throw new Error((await response.json()).error ?? "Çıktı alınamadı.");
-      const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement("a"); link.href = url; link.download = "TTVPN-Projeleri-Secilenler.xlsx";
-      document.body.appendChild(link); link.click(); link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      downloadExcelFile(await fetchExcelFile("/api/corporate/export", { body: JSON.stringify({ ids: selectedRows.map(row => row.id) }) }));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Çıktı alınamadı."); }
     finally { setBusy(false); }
   }
@@ -67,12 +64,15 @@ export default function CorporateTable({ projects, initialFilters }: { projects:
       <select aria-label="Durum" name="status" defaultValue={filters.status}>{states.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select>
       <button>Filtrele</button>
       {!selectionOnly && <a className="button" href={`/api/corporate/export?${query}`}>Filtrelenenleri Excel Al</a>}
+      {!selectionOnly && <ExcelShareButton url={`/api/corporate/export?${query}`} label="Filtrelenenleri Paylaş" />}
       <a className="button" href="/api/corporate/export?status=all">Komple Excel Al</a>
+      <ExcelShareButton url="/api/corporate/export?status=all" label="Komple Paylaş" />
     </form>
     {!!filters.district?.length && !selectionOnly && <p className="muted">Seçilen ilçeler: {filters.district.join(", ")}</p>}
     <div className="card filters corporate-selection"><b>{selectedRows.length} proje seçili</b>
       <button type="button" className="secondary" disabled={!selectedRows.length && !selectionOnly} onClick={() => setSelectionOnly(!selectionOnly)}>{selectionOnly ? "Filtrelenen Listeye Dön" : "Seçilenleri Listele"}</button>
       <button type="button" disabled={busy || !selectedRows.length} onClick={downloadSelected}>{busy ? "Hazırlanıyor…" : "Seçilenleri Excel Al"}</button>
+      <ExcelShareButton url="/api/corporate/export" body={{ ids: selectedRows.map(row => row.id) }} label="Seçilenleri Paylaş" disabled={busy || !selectedRows.length} />
       <button type="button" className="secondary" disabled={!selectedRows.length} onClick={() => { setSelected(new Set()); setSelectionOnly(false); }}>Seçimi Temizle</button>
     </div>
     {error && <p className="error" role="alert">{error}</p>}
