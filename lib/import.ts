@@ -11,8 +11,8 @@ export async function previewImport(buffer:Buffer,fileName:string,projectType:Pr
  const decisions:ProjectImportDecision[]=[];const acceptedRows:ParsedBuilding[]=[];
  for(const [projectId,rows] of grouped){
   const current=existingById.get(projectId);
-  if(!current){decisions.push({projectId,accepted:true,action:"CREATE",rowCount:rows.length,reason:"Yeni Proje ID; yeşil satırlar tamamlanmış olarak kaydedilecek"});acceptedRows.push(...rows);continue}
-  decisions.push({projectId,accepted:true,action:"REPLACE",rowCount:rows.length,reason:"Mevcut proje yeni Excel ile değiştirilecek; yeşil satırlar imalat tamam olarak alınacak"});acceptedRows.push(...rows);
+  if(!current){decisions.push({projectId,accepted:true,action:"CREATE",rowCount:rows.length,reason:"Yeni Proje ID; altyapı durumu Tamamlandı olan satırlar tamamlanmış olarak kaydedilecek"});acceptedRows.push(...rows);continue}
+  decisions.push({projectId,accepted:true,action:"REPLACE",rowCount:rows.length,reason:"Mevcut proje yeni Excel ile değiştirilecek; altyapı durumu Tamamlandı olan satırlar imalat tamam olarak alınacak"});acceptedRows.push(...rows);
  }
  const accepted=decisions.filter(d=>d.accepted),rejected=decisions.filter(d=>!d.accepted),newProjects=accepted.filter(d=>d.action==="CREATE").length,replacedProjects=accepted.filter(d=>d.action==="REPLACE").length;
  return {fileName,projectType,totalRows:parsed.totalRows,projectCount:projectIds.length,buildingCount:acceptedRows.length,acceptedProjects:accepted.length,rejectedProjects:rejected.length,acceptedRows:acceptedRows.length,rejectedRows:rejected.reduce((n,d)=>n+d.rowCount,0),newProjects,replacedProjects,existingProjects:existing.length,newBuildings:acceptedRows.length,updatedBuildings:0,unchangedBuildings:0,archivedBuildings:0,decisions,errors:parsed.errors,rows:acceptedRows};
