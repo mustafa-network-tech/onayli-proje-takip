@@ -26,7 +26,7 @@ export async function GET(request:Request){
 function excelResponse(rows:BuildingRow[],baseName:string){
  const data:Array<Record<string,string|number>>=rows.map(toRecord);data.push({"Proje ID":`TOPLAM (${rows.filter(r=>r.completed).length} / ${rows.length} BİNA)`,"Proje":"","Santral":"","İlçe":"","Mahalle":"","Cadde / Sokak":"","Bina No":"","HP":totalHp(rows),"Açıklama":""});
  const sheet=XLSX.utils.json_to_sheet(data),book=XLSX.utils.book_new();sheet["!cols"]=[22,9,20,18,22,30,12,9,45].map(wch=>({wch}));
- sheet["!rows"]=[{hpt:28},...rows.map(()=>({hpt:26})),{hpt:30}];
+ sheet["!rows"]=[{hpt:28},...rows.map(()=>({hpt:18})),{hpt:30}];
  const border=Object.fromEntries(["top","bottom","left","right"].map(side=>[side,{style:"thin",color:{rgb:"52606D"}}]));
  for(let r=0;r<=rows.length+1;r++)styleRow(sheet,r,{border,alignment:{wrapText:true,vertical:"top"},...(r===0?{font:{bold:true,sz:12},fill:{patternType:"solid",fgColor:{rgb:"D9EAF7"}}}:{})});
  const yellow={fill:{patternType:"solid",fgColor:{rgb:"FFF2CC"}},font:{color:{rgb:"17212B"}}},totalStyle={fill:{patternType:"solid",fgColor:{rgb:"D9EAF7"}},font:{bold:true,color:{rgb:"17212B"}}};

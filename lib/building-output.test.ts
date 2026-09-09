@@ -21,7 +21,7 @@ it.each([["GF",gf],["BF",bf]] as const)("creates a bordered %s building workbook
  const archive=XLSX.CFB.read(buffer,{type:"buffer"});
  const xml=Buffer.from(XLSX.CFB.find(archive,"/xl/worksheets/sheet1.xml").content).toString("utf8");
  expect(xml).toMatch(/<row\b[^>]*r="1"[^>]*ht="28"/);
- expect(xml).toMatch(/<row\b[^>]*r="2"[^>]*ht="26"/);
+ expect(xml).toMatch(/<row\b[^>]*r="2"[^>]*ht="18"/);
  expect(xml).toMatch(/<row\b[^>]*r="3"[^>]*ht="30"/);
  expect(xml).toContain('<pageSetUpPr fitToPage="1"/>');
  expect(xml).toContain('<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
