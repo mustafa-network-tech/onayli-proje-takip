@@ -1,3 +1,4 @@
+import {a4LandscapeExcelBuffer} from "@/lib/excel-print";
 import {requireUser} from "@/lib/auth";
 import {formatProgress,manufacturing} from "@/lib/stats";
 import * as XLSX from "xlsx-js-style";
@@ -28,7 +29,7 @@ function excelResponse(rows:BuildingRow[],baseName:string){
  const border=Object.fromEntries(["top","bottom","left","right"].map(side=>[side,{style:"thin",color:{rgb:"52606D"}}]));
  for(let r=0;r<=rows.length+1;r++)styleRow(sheet,r,{border,alignment:{wrapText:true,vertical:"top"},...(r===0?{font:{bold:true},fill:{patternType:"solid",fgColor:{rgb:"D9EAF7"}}}:{})});
  const yellow={fill:{patternType:"solid",fgColor:{rgb:"FFF2CC"}},font:{color:{rgb:"17212B"}}},totalStyle={fill:{patternType:"solid",fgColor:{rgb:"D9EAF7"}},font:{bold:true,color:{rgb:"17212B"}}};rows.forEach((b,index)=>{if(b.completed)styleRow(sheet,index+1,yellow)});styleRow(sheet,rows.length+1,totalStyle);XLSX.utils.book_append_sheet(book,sheet,"GF Bina Listesi");
- return fileResponse(XLSX.write(book,{type:"buffer",bookType:"xlsx"}),`${baseName}.xlsx`,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+ return fileResponse(a4LandscapeExcelBuffer(book),`${baseName}.xlsx`,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 
 async function pdfResponse(rows:BuildingRow[],district:string|undefined,baseName:string){

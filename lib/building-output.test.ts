@@ -18,6 +18,13 @@ it.each([["GF",gf],["BF",bf]] as const)("creates a bordered %s building workbook
  expect(data).toHaveLength(3);
  expect(data[1]).toEqual(["11125522",type,"Merkez","Test","—","—","—",0,""]);
  const archive=XLSX.CFB.read(buffer,{type:"buffer"});
+ const xml=Buffer.from(XLSX.CFB.find(archive,"/xl/worksheets/sheet1.xml").content).toString("utf8");
+ expect(xml).toContain('<pageSetUpPr fitToPage="1"/>');
+ expect(xml).toContain('<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
+ expect(book.Workbook?.Names).toEqual(expect.arrayContaining([
+  expect.objectContaining({Name:"_xlnm.Print_Area",Ref:`'${type} Bina Listesi'!$A$1:$I$3`}),
+  expect.objectContaining({Name:"_xlnm.Print_Titles",Ref:`'${type} Bina Listesi'!$1:$1`}),
+ ]));
  const styles=Buffer.from(XLSX.CFB.find(archive,"/xl/styles.xml").content).toString("utf8");
  for(const side of ["left","right","top","bottom"])expect(styles).toContain(`<${side} style="thin">`);
 });
