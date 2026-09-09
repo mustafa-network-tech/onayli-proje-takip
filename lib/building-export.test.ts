@@ -2,7 +2,7 @@ import {readFileSync} from "node:fs";
 import Database from "better-sqlite3";
 import {Prisma} from "@prisma/client";
 import {expect,it,vi} from "vitest";
-import {parseProjectIds} from "./project-filters";
+import {parseProjectIds,statusMatch} from "./project-filters";
 const mocks=vi.hoisted(()=>({query:vi.fn()}));
 vi.mock("./db",()=>({db:{$queryRaw:mocks.query}}));
 import {findExportBuildings} from "./building-export";
@@ -27,7 +27,17 @@ it.each(["GF","BF"] as const)("exports exact multiple %s IDs intersected with di
   expect(rows.map(r=>r.projectId)).toEqual(["11125522","21552255"]);
   expect(rows.every(r=>r.district==="A")).toBe(true);
   expect(await findExportBuildings(type,{id:"111"})).toEqual([]);
+  sqlite.exec('UPDATE HpBuilding SET cableCompleted=1,spliceCompleted=1,ibkCompleted=1 WHERE district=\'A\'');
+  const ordered=await findExportBuildings(type,{id:"11125522,21552255"});
+  expect(ordered.map(r=>[r.projectId,r.district])).toEqual([
+   ["11125522","B"],["11125522","A"],["21552255","B"],["21552255","A"],
+  ]);
   sqlite.prepare('UPDATE HpBuilding SET isActive=0 WHERE id=?').run("0A");
   expect(await findExportBuildings(type,{id:"11125522",district:"A"})).toEqual([]);
  }finally{sqlite.close()}
+});
+
+it("includes zero and partial progress only in incomplete results",()=>{
+ expect([0,33,50,65,67,99,100].filter(p=>statusMatch(p,"incomplete"))).toEqual([0,33,50,65,67,99]);
+ expect([0,65,100].filter(p=>statusMatch(p,"completed"))).toEqual([100]);
 });

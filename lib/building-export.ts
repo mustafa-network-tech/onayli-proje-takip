@@ -28,6 +28,7 @@ export function findExportBuildings(projectType:"GF"|"BF",filters:{district?:str
     ${district?Prisma.sql`AND b."district"=${district}`:Prisma.empty}
     ${ids.length?Prisma.sql`AND p."projectId" IN (SELECT value FROM json_each(${JSON.stringify(ids)}))`:Prisma.empty}
     ${year?Prisma.sql`AND p."projectYear"=${Number(year)}`:Prisma.empty}
-  ORDER BY p."projectId", b."district", b."neighborhood", b."street", b."doorNumber"
+  ORDER BY p."projectId",
+    CASE WHEN b."cableCompleted"=1 AND b."spliceCompleted"=1 AND (p."projectType"='GF' OR b."ibkCompleted"=1) THEN 1 ELSE 0 END, b."district", b."neighborhood", b."street", b."doorNumber"
  `);
 }

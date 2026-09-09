@@ -17,8 +17,12 @@ it.each([["GF",gf],["BF",bf]] as const)("creates a bordered %s building workbook
  expect(data[0]).toEqual(["Proje ID","Proje","Santral","İlçe","Mahalle","Cadde / Sokak","Bina No","HP","Açıklama"]);
  expect(data).toHaveLength(3);
  expect(data[1]).toEqual(["11125522",type,"Merkez","Test","—","—","—",0,""]);
+ expect((data[2] as string[])[0]).toBe("TOPLAM (0 / 1 BİNA)");
  const archive=XLSX.CFB.read(buffer,{type:"buffer"});
  const xml=Buffer.from(XLSX.CFB.find(archive,"/xl/worksheets/sheet1.xml").content).toString("utf8");
+ expect(xml).toMatch(/<row\b[^>]*r="1"[^>]*ht="28"/);
+ expect(xml).toMatch(/<row\b[^>]*r="2"[^>]*ht="26"/);
+ expect(xml).toMatch(/<row\b[^>]*r="3"[^>]*ht="30"/);
  expect(xml).toContain('<pageSetUpPr fitToPage="1"/>');
  expect(xml).toContain('<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
  expect(book.Workbook?.Names).toEqual(expect.arrayContaining([
@@ -27,4 +31,14 @@ it.each([["GF",gf],["BF",bf]] as const)("creates a bordered %s building workbook
  ]));
  const styles=Buffer.from(XLSX.CFB.find(archive,"/xl/styles.xml").content).toString("utf8");
  for(const side of ["left","right","top","bottom"])expect(styles).toContain(`<${side} style="thin">`);
+});
+
+it.each([["GF",gf],["BF",bf]] as const)("exports %s completed / total for all and incomplete lists",async(type,get)=>{
+ for(const [status,expected] of [["","TOPLAM (1 / 2 BİNA)"],["incomplete","TOPLAM (0 / 1 BİNA)"],["completed","TOPLAM (1 / 1 BİNA)"]]){
+  const response=await get(new Request(`http://localhost/api/projects/${type}/export?format=xlsx&status=${status}`));
+  expect(response.status).toBe(200);
+  const book=XLSX.read(Buffer.from(await response.arrayBuffer()),{type:"buffer"});
+  const rows=XLSX.utils.sheet_to_json<string[]>(book.Sheets[book.SheetNames[0]],{header:1});
+  expect(rows.at(-1)?.[0]).toBe(expected);
+ }
 });

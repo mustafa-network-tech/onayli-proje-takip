@@ -7,3 +7,13 @@ export function projectIdFilter(value?: string) {
   const ids = parseProjectIds(value);
   return ids.length ? { in: ids } : undefined;
 }
+
+export function statusMatch(percent: number, status?: string) {
+  switch (status) {
+    case "completed": return percent === 100;
+    case "incomplete": return percent < 100;
+    case "not_started": return percent === 0;
+    case "ongoing": return percent > 0 && percent < 100;
+    default: return true;
+  }
+}
