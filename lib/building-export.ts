@@ -1,3 +1,4 @@
+import {parseProjectIds} from "@/lib/project-filters";
 import {Prisma} from "@prisma/client";
 import {db} from "@/lib/db";
 
@@ -9,9 +10,10 @@ export type ExportBuilding={
 };
 
 // Relation includes become `IN (?, ?, ...)` queries. Large exports can exceed
-// D1's SQLite variable limit, while this join always uses at most four bindings.
+// D1's SQLite variable limit. The JSON ID list uses a single binding.
 export function findExportBuildings(projectType:"GF"|"BF",filters:{district?:string;id?:string;year?:string}){
  const {district,id,year}=filters;
+ const ids=parseProjectIds(id);
  return db.$queryRaw<ExportBuilding[]>(Prisma.sql`
   SELECT p."projectId", p."centralName", b."district", b."neighborhood",
          b."street", b."doorNumber", b."uavt", b."bbkHp", b."pstn", b."dsl",
@@ -24,7 +26,7 @@ export function findExportBuildings(projectType:"GF"|"BF",filters:{district?:str
   JOIN "HpProject" p ON p."id"=b."projectRefId"
   WHERE b."isActive"=1 AND p."projectType"=${projectType}
     ${district?Prisma.sql`AND b."district"=${district}`:Prisma.empty}
-    ${id?Prisma.sql`AND p."projectId" LIKE ${`%${id}%`}`:Prisma.empty}
+    ${ids.length?Prisma.sql`AND p."projectId" IN (SELECT value FROM json_each(${JSON.stringify(ids)}))`:Prisma.empty}
     ${year?Prisma.sql`AND p."projectYear"=${Number(year)}`:Prisma.empty}
   ORDER BY p."projectId", b."district", b."neighborhood", b."street", b."doorNumber"
  `);
