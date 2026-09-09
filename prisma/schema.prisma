@@ -169,6 +169,22 @@ model CorporateProject {
   @@index([district])
 }
 
+model TaficsProject {
+  id String @id @default(uuid())
+  province String
+  projectName String
+  projectType String @default("TAFICS")
+  underground Float @default(0)
+  cable Float @default(0)
+  horizontalDrilling Float @default(0)
+  permissionStatus String @default("ALINMADI")
+  completionStatus String @default("BAŞLAMADI")
+  description String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  @@index([province, projectType])
+}
+
 model ProductionImport {
   id String @id @default(cuid())
   fileName String

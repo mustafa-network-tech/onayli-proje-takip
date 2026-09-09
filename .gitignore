@@ -9,6 +9,7 @@ node_modules
 .dev.vars
 .dev.vars.*
 prisma/*.db*
+prisma/local-backups/
 .cloudflare-backups/
 coverage
 *.tsbuildinfo

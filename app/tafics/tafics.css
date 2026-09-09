@@ -1,0 +1,15 @@
+.tafics-module .top{flex-wrap:wrap;gap:12px}
+.tafics-module label{display:grid;gap:6px;min-width:0}
+.tafics-module .filters{align-items:end}
+.tafics-module button:disabled{opacity:.6;cursor:not-allowed}
+.tafics-form fieldset{border:0;margin:0;padding:0;min-width:0}
+.tafics-form h2{margin-top:0;overflow-wrap:anywhere}
+.tafics-form input,.tafics-form select,.tafics-form textarea{width:100%}
+.tafics-module .tafics-name{white-space:normal;min-width:260px;max-width:450px;overflow-wrap:anywhere}
+.tafics-description{white-space:normal;min-width:230px;max-width:400px}
+.tafics-description summary{cursor:pointer;color:var(--brand)}
+.tafics-description details div{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;margin-top:8px}
+.tafics-module .tafics-delete{background:var(--bad)}
+.tafics-module td .filters{flex-wrap:nowrap;margin:0}
+.tafics-module .kpi strong{overflow-wrap:anywhere}
+@media(max-width:760px){.tafics-module>.filters label{flex:1 1 160px}.tafics-form .grid{grid-template-columns:1fr}}
