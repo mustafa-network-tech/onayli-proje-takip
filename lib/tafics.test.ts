@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { Prisma } from "@prisma/client";
 import * as XLSX from "xlsx";
+import * as StyledXLSX from "xlsx-js-style";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { emptyTaficsFilters, filterTaficsProjects, taficsHeaders, taficsSchema, taficsTotals, type TaficsInput } from "./tafics-shared";
 import { taficsExcelBuffer } from "./tafics-export";
@@ -77,24 +78,33 @@ it("combines Turkish case-insensitive search and all filters with matching total
   expect(taficsTotals(rows)).toEqual({ underground: 6510.25, cable: 7020, horizontalDrilling: 430 });
   expect(filterTaficsProjects(rows, { ...emptyTaficsFilters, q: "bulunamaz" })).toEqual([]);
 });
-it("exports only ten requested columns, numeric values, sequential numbers, full notes and totals", async () => {
+it("exports nine columns without project type, with A4 print settings, numeric values and full notes", async () => {
   const first = await createTaficsProject(fixture({ projectName: "=1+1" }));
   const second = await createTaficsProject(fixture({ cable: 3.75 }));
   const buffer = taficsExcelBuffer([first, second]);
   const workbook = XLSX.read(buffer, { type: "buffer", cellStyles: true });
   const sheet = workbook.Sheets.TAFICS;
-  expect(XLSX.utils.sheet_to_json(sheet, { header: 1 })[0]).toEqual(taficsHeaders);
-  expect(sheet["!ref"]).toBe("A1:J4");
+  expect(XLSX.utils.sheet_to_json(sheet, { header: 1 })[0]).toEqual(taficsHeaders.filter(header => header !== "PROJE TÜRÜ"));
+  expect(sheet["!ref"]).toBe("A1:I4");
   expect([sheet.A2.v, sheet.A3.v]).toEqual([1, 2]);
   expect(sheet.C2.t).toBe("s"); expect(sheet.C2.f).toBeUndefined();
-  expect(sheet.J2.v).toBe(first.description);
-  for (const column of ["E", "F", "G"]) for (const row of [2, 3, 4]) expect(sheet[`${column}${row}`].t).toBe("n");
-  expect([sheet.E4.v, sheet.F4.v, sheet.G4.v]).toEqual([13000.5, 7003.75, 800]);
+  expect(sheet.I2.v).toBe(first.description);
+  for (const column of ["D", "E", "F"]) for (const row of [2, 3, 4]) expect(sheet[`${column}${row}`].t).toBe("n");
+  expect([sheet.D4.v, sheet.E4.v, sheet.F4.v]).toEqual([13000.5, 7003.75, 800]);
   expect(sheet.C4.v).toBe("TOPLAM");
   expect(JSON.stringify(XLSX.utils.sheet_to_json(sheet, { header: 1 }))).not.toContain(first.id);
   expect(sheet.A1.s.fgColor.rgb).toBe("175D8D");
   expect(sheet.C4.s.fgColor.rgb).toBe("DFF3E8");
-  expect(sheet["!cols"]?.[9].wch).toBeGreaterThan(50);
+  expect(sheet["!cols"]?.[8].wch).toBe(36);
+  expect(sheet["!rows"]?.[1].hpt).toBeGreaterThan(28);
+  expect(workbook.Workbook?.Names).toEqual(expect.arrayContaining([
+    expect.objectContaining({ Name: "_xlnm.Print_Area", Ref: "'TAFICS'!$A$1:$I$4" }),
+    expect.objectContaining({ Name: "_xlnm.Print_Titles", Ref: "'TAFICS'!$1:$1" }),
+  ]));
+  const archive = StyledXLSX.CFB.read(buffer, { type: "buffer" });
+  const xml = Buffer.from(StyledXLSX.CFB.find(archive, "/xl/worksheets/sheet1.xml").content).toString("utf8");
+  expect(xml).toContain('<pageSetUpPr fitToPage="1"/>');
+  expect(xml).toContain('<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
   const empty = XLSX.read(taficsExcelBuffer([]), { type: "buffer" }).Sheets.TAFICS;
   expect(empty.E2.v).toBe(0);
 });
@@ -105,7 +115,7 @@ it("applies active filters to the downloadable xlsx", async () => {
   expect(response.status).toBe(200);
   expect(response.headers.get("content-disposition")).toContain(".xlsx");
   const sheet = XLSX.read(await response.arrayBuffer()).Sheets.TAFICS;
-  expect(sheet["!ref"]).toBe("A1:J3"); expect(sheet.B2.v).toBe("İZMİR"); expect(sheet.F3.v).toBe(9);
+  expect(sheet["!ref"]).toBe("A1:I3"); expect(sheet.B2.v).toBe("İZMİR"); expect(sheet.E3.v).toBe(9);
   expect((await GET(new Request("http://localhost/api/tafics/export?permissionStatus=invalid"))).status).toBe(400);
 });
 it("requires existing authentication on every endpoint before reading or writing data", async () => {

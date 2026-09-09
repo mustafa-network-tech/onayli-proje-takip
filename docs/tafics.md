@@ -1,5 +1,11 @@
 # TAFICS teknik raporu
 
+## Excel baskı güncellemesi
+
+Production'a yayınlandı ve canlı Excel dosyasındaki A4 yatay / tek sayfa genişliği XML ayarları ile dokuz sütun doğrulandı. Sürüm: `66f0eafc-d876-482a-b17e-f19ff39620b9`. TAFICS'in 7 testi, TypeScript kontrolü ve production paketlemesi başarılı.
+
+Kullanıcının sonraki talebiyle Proje Türü yalnızca Excel çıktısından kaldırıldı; ekran, form, filtre ve veritabanında korunur. Güncel Excel dokuz sütundur (A:I). A4 yatay, bir sayfa genişliği, otomatik sayfa yüksekliği, dar kenar boşlukları ve her sayfada tekrar eden başlık satırı dosyaya kaydedilir. Metin kaydırma ve içeriğe göre satır yüksekliği uygulanır (Excel sınırına uygun en fazla 409 punto); çok uzun açıklamalar tam hücre değeri olarak korunur. Metrajlar D/E/F sütunlarında sayısal kalır. Aşağıdaki ilk yayın kayıtlarındaki 10 sütun bilgisi ilk sürüme aittir.
+
 TAFICS, mevcut Next.js App Router / React / Prisma yapısına bağımsız modül olarak eklendi. Yerelde SQLite, production ortamında mevcut Cloudflare D1 bağlantısı kullanılıyor. Yeni bağımlılık eklenmedi.
 
 ## Ekran ve işlemler

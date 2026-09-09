@@ -24,7 +24,7 @@ async function main() {
     const exported = await fetch(`${base}/api/tafics/export?${new URLSearchParams({ q: name, permissionStatus: "ALINDI" })}`, { headers });
     assert.equal(exported.status, 200);
     const sheet = XLSX.read(await exported.arrayBuffer()).Sheets.TAFICS;
-    assert.equal(sheet["!ref"], "A1:J3"); assert.equal(sheet.E2.t, "n"); assert.equal(sheet.E3.v, 6500.25);
+    assert.equal(sheet["!ref"], "A1:I3"); assert.equal(sheet.D2.t, "n"); assert.equal(sheet.D3.v, 6500.25);
     for (const route of ["/", "/corporate", "/projects/GF", "/monthly-hp"]) {
       assert.equal((await fetch(`${base}${route}`, { headers })).status, 200, route);
     }
