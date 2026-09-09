@@ -2,7 +2,7 @@ import { db } from "./db";
 import { taficsSchema, type TaficsInput, type TaficsRow } from "./tafics-shared";
 
 export async function findTaficsProjects() {
-  return db.$queryRaw<TaficsRow[]>`SELECT "id","province","projectName","projectType","underground","cable","horizontalDrilling","permissionStatus","completionStatus","description" FROM "TaficsProject" ORDER BY rowid DESC`;
+  return db.$queryRaw<TaficsRow[]>`SELECT "id","province","projectName","projectType","underground","cable","horizontalDrilling","permissionStatus","completionStatus","description" FROM "TaficsProject" ORDER BY rowid ASC`;
 }
 export async function createTaficsProject(input: TaficsInput) {
   const d = taficsSchema.parse(input), id = crypto.randomUUID();

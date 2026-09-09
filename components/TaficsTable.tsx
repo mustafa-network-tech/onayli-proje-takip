@@ -51,8 +51,8 @@ export default function TaficsTable({ projects }: { projects: TaficsRow[] }) {
     </div></div>
     <div ref={formArea}>{editing !== undefined && <TaficsForm key={editing?.id ?? "new"} project={editing ?? undefined} onCancel={() => setEditing(undefined)} onSaved={row => {
       const creating = editing === null;
-      setRecords(previous => creating ? [row, ...previous] : previous.map(item => item.id === row.id ? row : item));
-      setEditing(undefined); setFilters(emptyTaficsFilters); setPage(1);
+      setRecords(previous => creating ? [...previous, row] : previous.map(item => item.id === row.id ? row : item));
+      setEditing(undefined); setFilters(emptyTaficsFilters); setPage(creating ? Math.ceil((records.length + 1) / 50) : currentPage);
       setNotice(`${row.projectName} ${creating ? "eklendi" : "güncellendi"}.`);
     }} />}</div>
     {notice && <p role="status">{notice}</p>}{error && <p className="error" role="alert">{error}</p>}

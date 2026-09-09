@@ -41,10 +41,12 @@ it("creates duplicate project names, renames by internal key and deletes only th
   const { project } = await response.json();
   const second = await createTaficsProject(fixture());
   expect(second.id).not.toBe(project.id);
+  expect((await findTaficsProjects()).map(row => row.id)).toEqual([project.id, second.id]);
   const changed = fixture({ projectName: "Yeni Proje Adı", province: "İZMİR", projectType: "Başka Tür", underground: 0, cable: 1.5,
     horizontalDrilling: 23, permissionStatus: "ALINDI", completionStatus: "TAMAMLANDI", description: "Yeni açıklama\nİkinci satır" });
   expect((await PATCH(request("PATCH", changed), context(project.id))).status).toBe(200);
   expect((await findTaficsProjects()).find(row => row.id === project.id)).toEqual({ ...changed, id: project.id });
+  expect((await findTaficsProjects()).map(row => row.id)).toEqual([project.id, second.id]);
   expect((await DELETE(request("DELETE", { confirmed: false }), context(project.id))).status).toBe(400);
   expect(await findTaficsProjects()).toHaveLength(2);
   expect((await DELETE(request("DELETE", { confirmed: true }), context(project.id))).status).toBe(200);

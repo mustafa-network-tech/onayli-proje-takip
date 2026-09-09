@@ -19,7 +19,7 @@ TAFICS, mevcut Next.js App Router / React / Prisma yapısına bağımsız modül
 - İzin ve tamamlanma durumları ortak sabitlerden doğrulanır. API doğrulamasına ek olarak yeni SQL tablosunda CHECK kısıtları bulunur.
 - Mevcut inline bildirim ve `confirm` yaklaşımı kullanılır. Silme API'si de `confirmed: true` ister. Backend işlemleri mevcut `requireUser` üzerinden korunur; sayfa mevcut middleware kapsamındadır. Mevcut sistemde ayrı rol bazlı yetki modeli bulunmuyor.
 - Türkçe büyük/küçük harf uyumlu proje adı/il araması ve dört birleşik filtre vardır. Tablo 50 kayıtlık sayfalara ayrılır. Toplamlar ve Excel, geçerli sayfa dahil tüm filtre sonuçlarını kapsar.
-- Liste son eklenen kayıt önce olacak şekilde sıralanır. Excel aynı sıralamayı izler. S.N. filtre sonuçlarında 1'den başlar, sayfalarda devam eder; veritabanı anahtarı değildir.
+- Liste en eski kayıt başta, en yeni kayıt sonda olacak şekilde eklenme sırasını izler. Excel aynı sıralamayı kullanır. Yeni kayıt listenin sonuna eklenir ve kayıttan sonra son sayfa açılır. Düzenleme kayıt sırasını değiştirmez. S.N. filtre sonuçlarında 1'den başlar, sayfalarda devam eder; veritabanı anahtarı değildir.
 - Excel mevcut `xlsx-js-style` ile oluşturulur. İstenen 10 sütun, sayısal metraj hücreleri, TOPLAM satırı, kolon genişlikleri ve belirgin başlık/toplam biçimleri bulunur. Metin hücreleri formül olarak çalıştırılmaz.
 - CSS yalnızca TAFICS sınıflarına uygulanır. Mobilde yatay kaydırılabilir tablo ve tek sütunlu form kullanılır.
 
