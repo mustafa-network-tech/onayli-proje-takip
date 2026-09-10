@@ -10,7 +10,7 @@ export function taficsWorkbook(rows: TaficsRow[]) {
   const sheet = XLSX.utils.aoa_to_sheet(data);
   const widths = [5, 13, 48, 11, 11, 12, 15, 17, 36];
   sheet["!cols"] = widths.map(wch => ({ wch }));
-  sheet["!rows"] = [{ hpt: 28 }, ...rows.map(() => ({ hpt: 18 })), { hpt: 30 }];
+  sheet["!rows"] = [{ hpt: 28 }, ...rows.map(() => ({ hpt: 22 })), { hpt: 30 }];
   sheet["!margins"] = { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0.15, footer: 0.15 };
   sheet["!autofilter"] = { ref: `A1:I${rows.length + 1}` };
   const border = Object.fromEntries(["top", "bottom", "left", "right"].map(side =>

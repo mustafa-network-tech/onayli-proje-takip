@@ -98,7 +98,7 @@ it("exports nine columns without project type, with A4 print settings, numeric v
   expect(sheet.A1.s.fgColor.rgb).toBe("175D8D");
   expect(sheet.C4.s.fgColor.rgb).toBe("DFF3E8");
   expect(sheet["!cols"]?.[8].wch).toBe(36);
-  expect(sheet["!rows"]?.map(row => row.hpt)).toEqual([28, 18, 18, 30]);
+  expect(sheet["!rows"]?.map(row => row.hpt)).toEqual([28, 22, 22, 30]);
   expect(workbook.Workbook?.Names).toEqual(expect.arrayContaining([
     expect.objectContaining({ Name: "_xlnm.Print_Area", Ref: "'TAFICS'!$A$1:$I$4" }),
     expect.objectContaining({ Name: "_xlnm.Print_Titles", Ref: "'TAFICS'!$1:$1" }),
