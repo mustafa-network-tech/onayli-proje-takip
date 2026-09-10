@@ -45,7 +45,7 @@ export default async function MonthlyHp({ searchParams }: { searchParams: Promis
       <div className="filters no-print"><a className="button" href={`/api/monthly-hp/export?${query}`}>Excel Çıktısı Al</a><ExcelShareButton url={`/api/monthly-hp/export?${query}`} /><PrintHpReport /></div>
       <div className="table-wrap"><table className="hp-report-table">
         <thead><tr><th>Tür</th><th>Proje ID</th><th>UAVT</th><th>Bina Adresi</th><th>HP Sayısı</th>{list === "completed" && <><th>Ay</th><th className="no-print">Ayı Düzenle</th></>}</tr></thead>
-        <tbody>{report.rows.map(row => <tr key={row.id}><td>{row.projectType}</td><td>{row.projectId}</td><td>{row.uavt ?? "—"}</td><td className="hp-address">{buildingAddress(row)}</td><td>{number(row.hp)}</td>{list === "completed" && <><td>{row.month ? monthLabel(row.month) : "—"}</td><td className="no-print"><CompletionMonth id={row.id} month={row.month} /></td></>}</tr>)}
+        <tbody>{report.rows.map(row => <tr key={row.id} className={list === "completed" ? "completed-row" : undefined}><td>{row.projectType}</td><td>{row.projectId}</td><td>{row.uavt ?? "—"}</td><td className="hp-address">{buildingAddress(row)}</td><td>{number(row.hp)}</td>{list === "completed" && <><td>{row.month ? monthLabel(row.month) : "—"}</td><td className="no-print"><CompletionMonth id={row.id} month={row.month} /></td></>}</tr>)}
         {!report.rows.length && <tr><td colSpan={list === "completed" ? 7 : 5}>Bu seçim için bina bulunmuyor.</td></tr>}</tbody>
         <tfoot><tr><th colSpan={4}>TOPLAM · {number(totals.ALL.buildings)} bina</th><th>{number(totals.ALL.hp)}</th>{list === "completed" && <><th></th><th className="no-print"></th></>}</tr></tfoot>
       </table></div>

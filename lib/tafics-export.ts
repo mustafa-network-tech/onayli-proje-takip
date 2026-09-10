@@ -19,8 +19,9 @@ export function taficsWorkbook(rows: TaficsRow[]) {
     const cell = sheet[XLSX.utils.encode_cell({ r, c })];
     const header = r === 0, total = r === data.length - 1;
     const projectName = c === 2 && !header && !total;
+    const completed = !header && !total && rows[r - 1].completionStatus === "TAMAMLANDI";
     cell.s = { font: { name: "Calibri", sz: projectName ? 9 : 10, bold: header || total, color: { rgb: header ? "FFFFFF" : "17212B" } },
-      fill: { fgColor: { rgb: header ? "175D8D" : total ? "DFF3E8" : r % 2 ? "FFFFFF" : "F3F6F9" } },
+      fill: { fgColor: { rgb: header ? "175D8D" : total ? "DFF3E8" : completed ? "C6EFCE" : r % 2 ? "FFFFFF" : "F3F6F9" } },
       alignment: { vertical: "center", wrapText: !projectName, ...(projectName ? { shrinkToFit: true } : {}), horizontal: !header && !total && (c === 2 || c === 8) ? "left" : "center" },
       border };
     if (r > 0 && c >= 3 && c <= 5) cell.z = "#,##0";

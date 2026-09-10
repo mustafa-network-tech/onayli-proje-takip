@@ -21,6 +21,7 @@ export function monthlyHpWorkbook(rows: MonthlyHpRow[], options: { month: string
       if (!cell) continue;
       cell.s = { font: { name: "Calibri", sz: 11 }, alignment: { vertical: "top", wrapText: true } };
       if (r < 2 || r === values.length - 1) cell.s = { ...cell.s, font: { name: "Calibri", sz: r === 0 ? 14 : 11, bold: true }, fill: { patternType: "solid", fgColor: { rgb: "E8EEF3" } } };
+      else if (options.list === "completed") cell.s = { ...cell.s, fill: { patternType: "solid", fgColor: { rgb: "C6EFCE" } } };
       if (c === 4 && r > 1) cell.z = "#,##0";
     }
   }
