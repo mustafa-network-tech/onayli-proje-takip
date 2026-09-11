@@ -12,7 +12,7 @@ export function reportFilters(params: { month?: string; type?: string; list?: st
   return { month, scope: scope as HpScope, list: list as HpList };
 }
 
-const remainingWhere = Prisma.sql`b."isActive"=1 AND p."projectType" IN ('GF','BF')
+const remainingWhere = Prisma.sql`b."isActive"=1 AND b."isCancelled"=0 AND p."projectType" IN ('GF','BF')
   AND NOT (b."cableCompleted"=1 AND b."spliceCompleted"=1 AND (p."projectType"='GF' OR b."ibkCompleted"=1))`;
 
 export function findMonthlyHpRows(filters: ReturnType<typeof reportFilters>) {

@@ -8,7 +8,9 @@ export function projectIdFilter(value?: string) {
   return ids.length ? { in: ids } : undefined;
 }
 
-export function statusMatch(percent: number, status?: string) {
+export function statusMatch(percent: number, status?: string, isCancelled = false) {
+  if (status === "cancelled") return isCancelled;
+  if (isCancelled) return !status;
   switch (status) {
     case "completed": return percent === 100;
     case "incomplete": return percent < 100;

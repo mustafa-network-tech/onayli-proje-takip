@@ -12,6 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const input = schema.parse(await request.json());
     const b = await db.hpBuilding.findUnique({ where: { id }, include: { project: true } });
     if (!b) return Response.json({ error: "Bina bulunamadı" }, { status: 404 });
+    if (b.isCancelled) return Response.json({ error: "İptal edilen binada imalat değiştirilemez. Önce iptali geri alın." }, { status: 409 });
     if (input.field === "obk" && b.project.projectType !== "BF") return Response.json({ error: "OBK yalnızca BF binalarında kullanılabilir" }, { status: 400 });
     if (input.field === "splice" && input.value && !b.cableCompleted) return Response.json({ error: "Kablo tamamlanmadan Ek tamamlanamaz" }, { status: 409 });
     if (input.field === "cable" && !input.value && b.spliceCompleted) return Response.json({ error: "Önce Ek işaretini kaldırın" }, { status: 409 });

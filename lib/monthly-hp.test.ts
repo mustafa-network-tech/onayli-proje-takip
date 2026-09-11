@@ -23,6 +23,7 @@ function capture(source: "import" | "panel", id: string) {
 beforeEach(() => {
   sqlite = new Database(":memory:");
   sqlite.exec(readFileSync("migrations/0001_initial.sql", "utf8"));
+ sqlite.exec(readFileSync("migrations/0005_building_cancelled.sql", "utf8"));
   sqlite.exec(readFileSync("migrations/0002_monthly_hp.sql", "utf8"));
   mocks.query.mockImplementation((query: Prisma.Sql | TemplateStringsArray, ...values: unknown[]) => {
     const statement = Array.isArray(query) ? Prisma.sql(query as TemplateStringsArray, ...values) : query as Prisma.Sql;
@@ -30,6 +31,15 @@ beforeEach(() => {
   });
 });
 afterEach(() => { sqlite.close(); });
+
+it("keeps cancelled buildings out of remaining work and new completion snapshots", async () => {
+  addBuilding('cancelled','GF',false);
+  sqlite.exec("UPDATE HpBuilding SET isCancelled=1 WHERE id='cancelled'");
+  expect(await findMonthlyHpRows(reportFilters({list:'remaining'}))).toEqual([]);
+  sqlite.exec("UPDATE HpBuilding SET cableCompleted=1,spliceCompleted=1 WHERE id='cancelled'");
+  capture('panel','cancelled');
+  expect(sqlite.prepare('SELECT COUNT(*) AS count FROM HpMonthlyCompletion').get()).toEqual({count:0});
+});
 
 it("records imports in the previous Istanbul calendar month, including January rollover", () => {
   addBuilding('b1','GF',true);

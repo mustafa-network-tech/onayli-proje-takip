@@ -1,4 +1,5 @@
 "use client";
+import ProjectTypeNotice from "./ProjectTypeNotice";
 import { useState } from "react";
 import Link from "next/link";
 import { CorporateNoteForm, CorporateProgress } from "./CorporateActions";
@@ -68,6 +69,7 @@ export default function CorporateTable({ projects, initialFilters }: { projects:
       <a className="button" href="/api/corporate/export?status=all">Komple Excel Al</a>
       <ExcelShareButton url="/api/corporate/export?status=all" label="Komple Paylaş" />
     </form>
+    <ProjectTypeNotice query={filters.q} current="KURUMSAL" />
     {!!filters.district?.length && !selectionOnly && <p className="muted">Seçilen ilçeler: {filters.district.join(", ")}</p>}
     <div className="card filters corporate-selection"><b>{selectedRows.length} proje seçili</b>
       <button type="button" className="secondary" disabled={!selectedRows.length && !selectionOnly} onClick={() => setSelectionOnly(!selectionOnly)}>{selectionOnly ? "Filtrelenen Listeye Dön" : "Seçilenleri Listele"}</button>

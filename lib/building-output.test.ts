@@ -7,6 +7,22 @@ vi.mock("./building-export",()=>({findExportBuildings:vi.fn(async()=>[
 ])}));
 import {GET as gf} from "../app/api/projects/GF/export/route";
 import {GET as bf} from "../app/api/projects/BF/export/route";
+import {findExportBuildings} from "./building-export";
+
+it.each([["GF",gf],["BF",bf]] as const)("marks cancelled %s rows red and excludes them from incomplete exports",async(type,get)=>{
+ for(const status of ["", "cancelled", "incomplete"]){
+  vi.mocked(findExportBuildings).mockResolvedValueOnce([{projectId:"cancelled",centralName:null,district:null,neighborhood:null,street:null,doorNumber:null,uavt:null,bbkHp:10,pstn:null,dsl:null,cableCompleted:0,spliceCompleted:0,obkCompleted:0,description:"Not",isCancelled:1}]);
+  const response=await get(new Request(`http://localhost/api/projects/${type}/export?format=xlsx&status=${status}`));
+  const buffer=Buffer.from(await response.arrayBuffer());const book=XLSX.read(buffer,{type:"buffer"});
+  const rows=XLSX.utils.sheet_to_json<string[]>(book.Sheets[book.SheetNames[0]],{header:1});
+  expect(rows.length).toBe(status==="incomplete"?2:3);
+  if(status!=="incomplete"){
+   expect(rows[1][8]).toBe("İPTAL — Not");
+   const archive=XLSX.CFB.read(buffer,{type:"buffer"});
+   expect(Buffer.from(XLSX.CFB.find(archive,"/xl/styles.xml").content).toString()).toContain("FFC7CE");
+  }
+ }
+});
 
 it.each([["GF",gf],["BF",bf]] as const)("creates a bordered %s building workbook with only matching status",async(type,get)=>{
  const response=await get(new Request(`http://localhost/api/projects/${type}/export?format=xlsx&status=not_started&id=11125522,21552255&district=Test`));

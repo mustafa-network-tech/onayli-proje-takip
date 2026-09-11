@@ -19,3 +19,5 @@
 .nav-category{padding:18px 12px 6px;font-size:12px;letter-spacing:.7px;font-weight:800;color:#b9d5e9}.side a.nav-category-link{margin-top:18px;font-weight:800;letter-spacing:.5px}.nav-children{padding-left:12px}.nav-children a{font-size:13px}.corporate-address{white-space:normal;min-width:230px;max-width:480px}.corporate-note{white-space:pre-wrap;min-width:170px;max-width:320px}.corporate-done{background:var(--ok)}.corporate-edit{min-width:220px;white-space:normal}.corporate-edit summary{cursor:pointer;color:var(--brand);font-weight:600}.corporate-edit form{display:grid;gap:10px;padding-top:12px}.corporate-edit label{display:grid;gap:4px}.corporate-edit textarea,.corporate-edit input{width:100%}.corporate-module button:disabled{opacity:.6;cursor:wait}@media(max-width:760px){.side nav{display:block}.nav-children{display:flex;flex-wrap:wrap;padding-left:8px}.nav-category{padding-top:10px}.side a.nav-category-link{margin-top:10px}.corporate-module .top{flex-wrap:wrap}}
 
 tr.completed-row > td{background:#c6efce}
+
+tr.cancelled-row > td{background:#ffc7ce;color:#7f1d1d}

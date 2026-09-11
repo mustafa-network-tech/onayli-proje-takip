@@ -14,6 +14,7 @@ beforeEach(() => {
  vi.stubEnv("NODE_ENV", "production");
  sqlite = new Database(":memory:");
  sqlite.exec(readFileSync("migrations/0001_initial.sql", "utf8"));
+ sqlite.exec(readFileSync("migrations/0005_building_cancelled.sql", "utf8"));
  sqlite.exec(readFileSync("migrations/0002_monthly_hp.sql", "utf8"));
  sqlite.exec(`INSERT INTO User (id,name,email) VALUES ('u','Test','test@example.com')`);
  batches = 0;

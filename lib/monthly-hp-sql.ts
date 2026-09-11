@@ -12,7 +12,7 @@ export function completionCapture(source: "import" | "panel", targetId: string):
         b."district",b."neighborhood",b."street",b."buildingName",b."doorNumber",b."bbkHp",${month},?
       FROM "HpBuilding" b JOIN "HpProject" p ON p."id"=b."projectRefId"
       WHERE ${source === "panel" ? 'b."id"' : 'p."lastImportId"'}=?
-        AND b."isActive"=1 AND b."cableCompleted"=1 AND b."spliceCompleted"=1
+        AND b."isActive"=1 AND b."isCancelled"=0 AND b."cableCompleted"=1 AND b."spliceCompleted"=1
         AND (p."projectType"='GF' OR (p."projectType"='BF' AND b."ibkCompleted"=1))
       ON CONFLICT("projectType","projectId","sourceKey") DO NOTHING`,
     values: [source, targetId],

@@ -1,6 +1,7 @@
-export function manufacturing(b:{cableCompleted:boolean;spliceCompleted:boolean;obkCompleted:boolean},type:string){const done=(b.cableCompleted?1:0)+(b.spliceCompleted?1:0)+(type==="BF"&&b.obkCompleted?1:0);const total=type==="BF"?3:2;return {percent:Math.round(done/total*100),status:done===0?"Başlanmadı":done===total?"Tamamlandı":"Devam Ediyor"};}
+export function manufacturing(b:{cableCompleted:boolean;spliceCompleted:boolean;obkCompleted:boolean;isCancelled?:boolean},type:string){if(b.isCancelled)return {percent:0,status:"İptal"};const done=(b.cableCompleted?1:0)+(b.spliceCompleted?1:0)+(type==="BF"&&b.obkCompleted?1:0);const total=type==="BF"?3:2;return {percent:Math.round(done/total*100),status:done===0?"Başlanmadı":done===total?"Tamamlandı":"Devam Ediyor"};}
 
-export function hpWeightedProgress(buildings:Array<{bbkHp:number;cableCompleted:boolean;spliceCompleted:boolean;obkCompleted:boolean}>,type:string){
+export function hpWeightedProgress(buildings:Array<{bbkHp:number;cableCompleted:boolean;spliceCompleted:boolean;obkCompleted:boolean;isCancelled?:boolean}>,type:string){
+  buildings=buildings.filter(b=>!b.isCancelled);
   const totalHp=buildings.reduce((sum,b)=>sum+Math.max(0,b.bbkHp),0);
   if(totalHp===0)return 0;
   const totalSteps=type==="BF"?3:2;

@@ -16,6 +16,7 @@ it.each(["GF","BF"] as const)("exports exact multiple %s IDs intersected with di
  const sqlite=new Database(":memory:");
  try {
   sqlite.exec(readFileSync("migrations/0001_initial.sql","utf8"));
+ sqlite.exec(readFileSync("migrations/0005_building_cancelled.sql", "utf8"));
   for(const [i,id] of ["11125522","21552255","111255220"].entries()){
    sqlite.prepare('INSERT INTO HpProject (id,projectId,projectType,updatedAt) VALUES (?,?,?,0)').run(`p${i}`,id,type);
    for(const district of ["A","B"]){

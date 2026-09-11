@@ -6,7 +6,7 @@ export type ExportBuilding={
  projectId:string;centralName:string|null;district:string|null;neighborhood:string|null;
  street:string|null;doorNumber:string|null;uavt:string|null;bbkHp:number;pstn:number|null;
  dsl:number|null;cableCompleted:number|boolean;spliceCompleted:number|boolean;
- obkCompleted:number|boolean;description:string|null;
+ obkCompleted:number|boolean;description:string|null;isCancelled?:number|boolean;
 };
 
 // Relation includes become `IN (?, ?, ...)` queries. Large exports can exceed
@@ -17,7 +17,7 @@ export function findExportBuildings(projectType:"GF"|"BF",filters:{district?:str
  return db.$queryRaw<ExportBuilding[]>(Prisma.sql`
   SELECT p."projectId", p."centralName", b."district", b."neighborhood",
          b."street", b."doorNumber", b."uavt", b."bbkHp", b."pstn", b."dsl",
-         b."cableCompleted", b."spliceCompleted", b."ibkCompleted" AS "obkCompleted",
+         b."cableCompleted", b."spliceCompleted", b."ibkCompleted" AS "obkCompleted", b."isCancelled",
          COALESCE((
            SELECT group_concat(n."note", ' | ')
            FROM (SELECT "note" FROM "HpBuildingNote" WHERE "buildingId"=b."id" ORDER BY "createdAt" DESC) n

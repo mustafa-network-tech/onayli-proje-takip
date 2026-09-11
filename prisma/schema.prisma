@@ -39,6 +39,7 @@ model HpBuilding {
   project HpProject @relation(fields: [projectRefId], references: [id], onDelete: Cascade)
   sourceKey String
   isActive Boolean @default(true)
+  isCancelled Boolean @default(false)
   uavt String?
   district String?
   neighborhood String?
