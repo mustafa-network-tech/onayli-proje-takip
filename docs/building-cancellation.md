@@ -2,7 +2,7 @@
 
 GF/BF binaları tek tek iptal edilebilir ve iptal geri alınabilir. İmalat işaretleri korunur; iptal sırasında değiştirilemez. İptal, diğer imalat durumlarından ayrıdır. Tüm durumlarda ve İptal filtresinde görünür; tamamlanmayan, başlanmayan, devam eden ve tamamlanan filtrelerinden çıkarılır. Bina satırları ekranlarda ve Excel/PDF çıktılarında kırmızıdır. Aktif HP ilerlemesi ve güncel kalan iş hesapları iptalleri dışarıda tutar. Geçmiş aylık tamamlanma kayıtları değiştirilmez.
 
-ID kontrolü GF/BF listelerinde, HP aramasında ve Kurumsal filtrelemede tam ID eşleşmesiyle diğer proje türlerini bildirir. Aynı ID birden fazla türde varsa diğer eşleşmeler de gösterilir. TAFICS'te ayrı bir kullanıcı proje ID alanı bulunmadığından bu sorgu GF, BF ve Kurumsal kayıtlarını kapsar.
+ID kontrolü GF/BF listelerinde, HP aramasında tam ID eşleşmesiyle diğer proje türlerini bildirir. Aynı ID birden fazla türde varsa diğer eşleşmeler de gösterilir. Sorgu GF ve BF kayıtlarını kapsar.
 
 ## Yayın sırası
 

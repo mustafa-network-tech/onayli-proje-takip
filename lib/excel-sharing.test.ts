@@ -18,7 +18,7 @@ it("prepares the actual Excel attachment with its filename and all URL filters u
   const expected = await response.clone().arrayBuffer();
   const fetchMock = vi.fn().mockResolvedValue(response);
   vi.stubGlobal("fetch", fetchMock);
-  const url = "/api/corporate/export?district=B%C4%B0GA-48&district=LAPSEK%C4%B0-49&status=completed";
+  const url = "/api/projects/GF/export?district=B%C4%B0GA-48&district=LAPSEK%C4%B0-49&status=completed";
   const result = await fetchExcelFile(url);
   expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ method: "GET", credentials: "same-origin", cache: "no-store" }));
   expect(result.name).toBe("TTVPN-Projeleri.xlsx");
@@ -31,8 +31,8 @@ it("posts only selected IDs and propagates the abort signal", async () => {
   vi.stubGlobal("fetch", fetchMock);
   const body = JSON.stringify({ ids: ["a", "b"] });
   const signal = new AbortController().signal;
-  await fetchExcelFile("/api/corporate/export", { body, signal });
-  expect(fetchMock).toHaveBeenCalledWith("/api/corporate/export", expect.objectContaining({ method: "POST", body, signal, headers: { "content-type": "application/json" } }));
+  await fetchExcelFile("/api/projects/GF/export", { body, signal });
+  expect(fetchMock).toHaveBeenCalledWith("/api/projects/GF/export", expect.objectContaining({ method: "POST", body, signal, headers: { "content-type": "application/json" } }));
 });
 
 it("rejects expired sessions, API errors and empty files instead of sharing them as Excel", async () => {

@@ -13,12 +13,11 @@ import { findProjectLocations } from "./project-lookup";
 let sqlite: Database.Database;
 beforeEach(() => {
   vi.resetAllMocks(); sqlite = new Database(":memory:");
-  for (const file of ["0001_initial.sql", "0002_monthly_hp.sql", "0003_corporate.sql", "0005_building_cancelled.sql"]) sqlite.exec(readFileSync(`migrations/${file}`, "utf8"));
+  for (const file of ["0001_initial.sql", "0002_monthly_hp.sql", "0005_building_cancelled.sql"]) sqlite.exec(readFileSync(`migrations/${file}`, "utf8"));
   sqlite.exec(`INSERT INTO User (id,name,email) VALUES ('u','Test','test@test');
     INSERT INTO HpProject (id,projectId,projectType,updatedAt) VALUES ('p','00123','GF',0);
     INSERT INTO HpBuilding (id,projectRefId,sourceKey,updatedAt) VALUES ('b','p','b',0);
-    INSERT INTO HpBuilding (id,projectRefId,sourceKey,updatedAt) VALUES ('other','p','other',0);
-    INSERT INTO CorporateProject (id,projectId) VALUES ('c','00123');`);
+    INSERT INTO HpBuilding (id,projectRefId,sourceKey,updatedAt) VALUES ('other','p','other',0);`);
   mocks.auth.mockResolvedValue({ id: "u" });
   mocks.find.mockImplementation(() => { const b = sqlite.prepare('SELECT * FROM HpBuilding WHERE id=?').get('b') as Record<string, unknown>; return { ...b, isActive: true, isCancelled: Boolean(b.isCancelled), project: { projectType: "GF" } }; });
   mocks.batch.mockImplementation((commands: {sql:string;values:unknown[]}[]) => sqlite.transaction(() => commands.forEach(c => sqlite.prepare(c.sql).run(...c.values)))());
@@ -47,8 +46,8 @@ it("excludes cancelled buildings from every active status and HP progress", () =
   expect(manufacturing(cancelled,"BF").status).toBe("İptal");
   expect(hpWeightedProgress([cancelled,{...cancelled,isCancelled:false,bbkHp:10,cableCompleted:true,spliceCompleted:true,obkCompleted:true}],"BF")).toBe(100);
 });
-it("finds exact IDs across HP and corporate without partial or injected matches", async () => {
-  expect((await findProjectLocations("00123,00123")).map(p=>p.projectType)).toEqual(["GF","KURUMSAL"]);
+it("finds exact HP project IDs without partial or injected matches", async () => {
+  expect((await findProjectLocations("00123,00123")).map(p=>p.projectType)).toEqual(["GF"]);
   expect(await findProjectLocations("123")).toEqual([]);
   expect(await findProjectLocations("' OR 1=1 --")).toEqual([]);
 });

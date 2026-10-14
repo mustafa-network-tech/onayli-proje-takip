@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { ProjectLocation } from "@/lib/project-lookup";
 
-export default function ProjectTypeNotice({ query, current }: { query?: string; current: "GF" | "BF" | "HP" | "KURUMSAL" }) {
+export default function ProjectTypeNotice({ query, current }: { query?: string; current: "GF" | "BF" | "HP" }) {
   const [result, setResult] = useState<{ query: string; projects: ProjectLocation[]; error?: string }>();
   useEffect(() => {
     if (!query?.trim()) return;
@@ -18,7 +18,7 @@ export default function ProjectTypeNotice({ query, current }: { query?: string; 
   if (!query || result?.query !== query) return null;
   const others = result.projects.filter(p => current === "HP" ? p.projectType !== "GF" && p.projectType !== "BF" : p.projectType !== current);
   return <>{result.error && <p role="status" className="muted">{result.error}</p>}{others.map(p => <p className="card" role="status" key={`${p.projectType}-${p.id}`}>
-    <b>{p.projectId}</b>: Bu proje {p.projectType === "KURUMSAL" ? "Kurumsal" : p.projectType} projesidir. {" "}
-    <Link className="button" href={p.projectType === "KURUMSAL" ? `/corporate?${new URLSearchParams({ q: p.projectId })}` : `/projects/${p.projectType}/${encodeURIComponent(p.id)}`}>Projeyi Aç</Link>
+    <b>{p.projectId}</b>: Bu proje {p.projectType} projesidir. {" "}
+    <Link className="button" href={`/projects/${p.projectType}/${encodeURIComponent(p.id)}`}>Projeyi Aç</Link>
   </p>)}</>;
 }

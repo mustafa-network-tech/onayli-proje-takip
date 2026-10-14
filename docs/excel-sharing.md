@@ -4,7 +4,6 @@ Excel indirme seçeneklerinin yanında ayrı paylaşım düğmeleri bulunur:
 
 - GF/BF listeleri ve proje detayları: seçilen bina/proje kapsamı ve uygulanmış filtrelerle **Excel Paylaş**. PDF indirme seçilmiş olsa bile paylaşım Excel üretir.
 - Aylık HP: ay, GF/BF/GF+BF ve tamamlanan/kalan seçimiyle **Excel Paylaş**.
-- Kurumsal: **Filtrelenenleri Paylaş**, **Komple Paylaş**, **Seçilenleri Paylaş**. Çoklu ilçe/durum/arama filtreleri ve seçilen proje ID'leri ilgili çıktıyla aynıdır.
 
 İlk tıklama mevcut, oturum gerektiren çıktı adresinden Excel dosyasını hazırlar. Hazır dosyada **WhatsApp / Paylaş** düğmesine basılınca cihazın paylaşım menüsü açılır; kullanıcı WhatsApp'ı ve alıcıyı seçer. Bu ikinci tıklama, uzun süren dosya hazırlığında tarayıcının kullanıcı etkileşimi şartını korur. Dosya baytları değişmediğinden Excel biçimlendirmesi, A4 ayarları ve tamamlanan satır renkleri korunur.
 

@@ -15,7 +15,6 @@ model User {
   notes HpBuildingNote[]
   history HpBuildingHistory[]
   imports HpExcelImport[]
-  productionImports ProductionImport[]
   createdAt DateTime @default(now())
 }
 
@@ -133,91 +132,42 @@ model HpMonthlyCompletion {
   @@index([month, projectType])
 }
 
-model Team {
+// Daily building reports. Items are snapshots with no relation to HpBuilding.
+// Partial unique indexes and immutability triggers live in migrations/0006.
+model DailyReport {
   id String @id @default(cuid())
-  name String
-  normalizedName String @unique
-  entries ProductionEntry[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status String @default("DRAFT")
+  reportDate String?
+  sequence Int?
+  title String?
+  totalBuildings Int?
+  completedBuildings Int?
+  completedHp Int?
+  problemBuildings Int?
+  problemHp Int?
+  cancelledBuildings Int?
+  cancelledHp Int?
+  finalizedAt BigInt?
+  createdAt BigInt
+  updatedAt BigInt
+  items DailyReportItem[]
 }
 
-model CorporateImport {
+model DailyReportItem {
   id String @id @default(cuid())
-  fileName String
-  totalRows Int
-  importedBy String
-  importedAt DateTime @default(now())
-}
-
-model CorporateProject {
-  id String @id @default(cuid())
-  projectId String @unique
-  district String?
-  address String?
-  centralName String?
-  drawingName String?
-  projectFeature String?
-  approvalStatus String?
-  cableCompleted Boolean @default(false)
-  spliceCompleted Boolean @default(false)
-  note String @default("")
-  districtEdited Boolean @default(false)
-  addressEdited Boolean @default(false)
-  lastImportId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  @@index([district])
-}
-
-model TaficsProject {
-  id String @id @default(uuid())
-  province String
-  projectName String
-  projectType String @default("TAFICS")
-  underground Float @default(0)
-  cable Float @default(0)
-  horizontalDrilling Float @default(0)
-  permissionStatus String @default("ALINMADI")
-  completionStatus String @default("BAŞLAMADI")
-  description String @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  @@index([province, projectType])
-}
-
-model ProductionImport {
-  id String @id @default(cuid())
-  fileName String
-  fingerprint String @unique
-  workDate DateTime
-  uploadedAt DateTime @default(now())
+  reportId String
+  report DailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  projectType String
+  projectId String
+  sourceKey String
+  buildingRefId String?
+  neighborhood String @default("")
+  address String @default("")
+  hp Int @default(0)
   status String
-  totalTeams Int
-  totalItems Int
-  unknownItems Int
-  importedBy String
-  user User @relation(fields: [importedBy], references: [id])
-  entries ProductionEntry[]
-  @@index([workDate])
-}
-
-model ProductionEntry {
-  id String @id @default(cuid())
-  importId String
-  productionImport ProductionImport @relation(fields: [importId], references: [id], onDelete: Cascade)
-  teamId String
-  team Team @relation(fields: [teamId], references: [id])
-  workDate DateTime
-  category String
-  subtype String?
-  cableCapacity Int?
-  cableFamily String?
-  quantity Float
-  unit String
-  originalText String
-  createdAt DateTime @default(now())
-  @@index([workDate, teamId])
-  @@index([category, subtype])
-  @@index([cableFamily, cableCapacity])
+  note String @default("")
+  createdAt BigInt
+  updatedAt BigInt
+  @@unique([reportId, projectType, projectId, sourceKey])
+  @@index([reportId])
 }
